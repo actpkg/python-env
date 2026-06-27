@@ -39,6 +39,22 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: just test
 
+  e2e-net:
+    name: E2E Test (network)
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          name: component.wasm
+      - uses: moonrepo/setup-rust@v1
+        with:
+          bins: just, hurl
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: just test-net
+
   lint:
     name: Lint
     runs-on: ubuntu-latest

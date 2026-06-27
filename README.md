@@ -71,10 +71,18 @@ Constraints and honest limitations:
   (`--allow wasi:http`); without a grant it is denied. The host policy bounds
   egress to the declared hosts (`pypi.org`, `files.pythonhosted.org`). Arbitrary
   PyPI fetch is a supply-chain surface — grant it deliberately.
+- **Code only — no data files or namespace packages.** Only the Python
+  modules in a wheel are installed; bundled *data files* (e.g. `certifi`'s
+  CA bundle, `tzdata`/`pytz` zoneinfo, locale data) and PEP 420 implicit
+  namespace packages are not served. A package that reads packaged data at
+  runtime may import but then fail, and namespace-only packages may not
+  import at all.
 - **Installs are process-global, not per-session.** An installed package is
-  importable from every session of a running instance; per-session `exec`
-  namespaces (variables/definitions) stay isolated. Installs do not persist
-  across a restart of the component.
+  importable from every session of a running instance; per-session isolation
+  covers *variables and definitions* (the `exec` namespace), but
+  imported-module state is shared process-wide — a module imported in one
+  session is the same object in another. Installs do not persist across a
+  restart of the component.
 
 ## Build
 ```bash

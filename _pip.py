@@ -50,11 +50,15 @@ def _pure_sys_tags() -> tuple:
     return tuple(tags)
 
 
+# Version-locked to micropip 0.11.1 (pinned in pyproject): this reaches into
+# micropip internals (_utils.sys_tags call-site, _vendored.packaging layout).
+# Re-verify the sys_tags shape and CompatibilityLayer methods on any bump.
 _mp_utils.sys_tags = _pure_sys_tags
 
 
 def _split_url(url: str) -> tuple[str, str]:
-    assert url.startswith("https://"), f"only https supported: {url}"
+    if not url.startswith("https://"):
+        raise ValueError(f"only https supported: {url}")
     rest = url[len("https://") :].split("#", 1)[0]
     slash = rest.find("/")
     return (rest, "/") if slash == -1 else (rest[:slash], rest[slash:])
