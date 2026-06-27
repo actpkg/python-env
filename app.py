@@ -59,6 +59,10 @@ try:
 except ImportError:
     pass
 try:
+    import msgpack as _msgpack  # noqa: F401 — fast C++ binary serialization (sci build)
+except ImportError:
+    pass
+try:
     # Pillow (sci build). Pre-import the format plugins + helpers it otherwise
     # lazy-loads, so they're frozen (componentize-py snapshots only what's reached).
     import PIL.Image  # noqa: F401
