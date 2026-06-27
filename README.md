@@ -13,6 +13,7 @@ sandbox; numpy is tracked separately).
 |------|-------------|
 | `exec` | Run Python against the session namespace; returns combined stdout/result/traceback |
 | `reset_session` | Clear the session namespace |
+| `install` | Install a pure-Python (`*-none-any`) package from PyPI at runtime; importable in any session. Needs `wasi:http`. |
 
 ## Bundled libraries
 
@@ -49,6 +50,31 @@ available to every `exec` call without any installation step.
 | `jsonschema` | Transitively requires `rpds` (Rust C extension via `referencing`) |
 | `networkx` | Requires `bz2` → `_bz2` C extension (not available in WASI) |
 | `sympy` | Requires `ctypes` → `_ctypes` C extension (not available in WASI) |
+
+## Installing more packages
+
+`install(package)` fetches a package (and its dependencies) from PyPI at
+runtime and makes it importable in `exec`:
+
+```
+act call python-env.wasm install --args '{"package":"prettytable"}' --allow wasi:http
+```
+
+Constraints and honest limitations:
+
+- **Pure-Python wheels only.** Only `*-none-any` wheels are accepted. Anything
+  with a compiled extension (`numpy`, `pandas`, `pydantic-core`, …) is rejected
+  with "Can't find a pure Python 3 wheel". The curated scientific tier (numpy)
+  is tracked separately.
+- **Network is the one exposed surface.** `install` is the only feature that
+  reaches the network, and only to PyPI. It requires the `wasi:http` capability
+  (`--allow wasi:http`); without a grant it is denied. The host policy bounds
+  egress to the declared hosts (`pypi.org`, `files.pythonhosted.org`). Arbitrary
+  PyPI fetch is a supply-chain surface — grant it deliberately.
+- **Installs are process-global, not per-session.** An installed package is
+  importable from every session of a running instance; per-session `exec`
+  namespaces (variables/definitions) stay isolated. Installs do not persist
+  across a restart of the component.
 
 ## Build
 ```bash
