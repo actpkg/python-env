@@ -81,6 +81,7 @@ try:
     import PIL.Image  # noqa: F401
     import PIL.ImageFile  # noqa: F401
     import PIL.PngImagePlugin  # noqa: F401
+    import PIL.JpegImagePlugin  # noqa: F401
     import PIL.BmpImagePlugin  # noqa: F401
     import PIL.GifImagePlugin  # noqa: F401
     import PIL.PpmImagePlugin  # noqa: F401

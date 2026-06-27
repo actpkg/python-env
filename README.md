@@ -126,13 +126,13 @@ act call python-env.wasm exec --session-args '{}' \
 All are pure compute — they need **no capabilities**. SciPy is not included
 (Fortran is unavailable on wasm).
 
-**Pillow** does PNG / BMP / GIF / PPM (create, transform, encode → bytes; works
-with numpy via `np.asarray`). Return an image to the caller with
-`show(buf.getvalue())` — `exec` emits it as an `image/png` content part next to
-the text result (mime is sniffed from the bytes, or pass it explicitly). **JPEG is not built in** — libjpeg's `setjmp` error
-handling lowers to a wasm SjLj `__c_longjmp` tag that componentize-py can't fold;
-PNG (via zlib) needs no `setjmp`. Text rendering (`ImageFont`, freetype) is also
-not built in yet.
+**Pillow** does PNG / JPEG / BMP / GIF / PPM (create, transform, encode → bytes;
+works with numpy via `np.asarray`). Return an image to the caller with
+`show(buf.getvalue())` — `exec` emits it as an `image/png` (or `image/jpeg`)
+content part next to the text result (mime sniffed from the bytes, or pass it).
+JPEG works because libjpeg's `setjmp` (which lowers to a wasm SjLj `__c_longjmp`
+tag) is folded via a patched componentize-py + the modern `try_table` EH encoding.
+Text rendering (`ImageFont`, freetype) is not built in yet.
 
 pandas is broadly functional: `DataFrame`/`Series`, numeric reductions,
 arithmetic, `groupby`, and **datetime / time-series** (`to_datetime`,
