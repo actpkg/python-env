@@ -63,6 +63,10 @@ try:
 except ImportError:
     pass
 try:
+    import lz4.frame  # noqa: F401 — fast compression (sci build)
+except ImportError:
+    pass
+try:
     import lxml.etree  # noqa: F401 — XML/HTML parsing + XPath (sci build)
     import lxml.html  # noqa: F401
 except ImportError:

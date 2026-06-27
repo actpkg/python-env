@@ -110,11 +110,11 @@ Constraints and honest limitations:
   session is the same object in another. Installs do not persist across a
   restart of the component.
 
-## Scientific tier: numpy + pandas + regex + Pillow + msgpack + lxml
+## Scientific tier: numpy + pandas + regex + Pillow + msgpack + lxml + lz4
 
 The published `python-env` bundles **numpy 2.5.0**, **pandas 3.0.3**, **regex**
 (fast/extended `re`), **Pillow** (image processing), **msgpack** (binary
-serialization), and **lxml** (fast XML/HTML parsing + XPath) — real C-extension
+serialization), **lxml** (fast XML/HTML parsing + XPath), and **lz4** (fast compression) — real C-extension
 libraries, cross-compiled to WebAssembly and folded into the component, running
 inside the ACT sandbox:
 
