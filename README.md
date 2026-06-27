@@ -77,10 +77,19 @@ Constraints and honest limitations:
   native library work), but actually using FFI / compression / memory-mapping
   raises. A package whose core path needs real FFI won't work.
 - **Network is the one exposed surface.** `install` is the only feature that
-  reaches the network, and only to PyPI. It requires the `wasi:http` capability
-  (`--allow wasi:http`); without a grant it is denied. The host policy bounds
-  egress to the declared hosts (`pypi.org`, `files.pythonhosted.org`). Arbitrary
-  PyPI fetch is a supply-chain surface — grant it deliberately.
+  reaches the network. It requires the `wasi:http` capability (`--allow wasi:http`);
+  without a grant it is denied. The host policy bounds egress to the declared hosts
+  (`pypi.org`, `files.pythonhosted.org`). Arbitrary PyPI fetch is a supply-chain
+  surface — grant it deliberately.
+
+  **Hardened / private index.** `install(package, index_url=...)` targets any
+  PEP 503/691 index instead of PyPI. Combined with the egress allowlist this is a
+  curated supply chain *enforced by the capability model, not by trusting the
+  caller*: grant `wasi:http` only to your index host (e.g. `--grant
+  '{"wasi:http":{"mode":"allowlist","allow":[{"host":"pkgs.corp.example"}]}}'`)
+  and every install is confined to it — a request to any other index is denied at
+  the host, regardless of what `index_url` the agent passes. Good fit for
+  air-gapped / regulated deployments.
 - **Code only — no data files or namespace packages.** Only the Python
   modules in a wheel are installed; bundled *data files* (e.g. `certifi`'s
   CA bundle, `tzdata`/`pytz` zoneinfo, locale data) and PEP 420 implicit

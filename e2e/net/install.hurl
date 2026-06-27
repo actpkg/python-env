@@ -27,3 +27,12 @@ POST {{baseurl}}/tools/exec
 HTTP 200
 [Asserts]
 jsonpath "$.content[0].data" == "'{2: 3, 3: 2, 5: 1}'"
+
+# index_url targets a specific index (here PyPI explicitly). A deployment pins a
+# curated/private index here AND restricts the wasi:http egress allowlist to its
+# host, so installs are confined to it by the capability model.
+POST {{baseurl}}/tools/install
+{"arguments": {"package": "toolz", "index_url": "https://pypi.org/simple"}}
+HTTP 200
+[Asserts]
+jsonpath "$.content[0].data" contains "installed toolz from https://pypi.org/simple"

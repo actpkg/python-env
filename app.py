@@ -128,10 +128,16 @@ class PythonEnv:
         session.globals["__builtins__"] = __builtins__
         return "(session reset)"
 
-    @tool(description="Install a pure-Python package from PyPI (shared across all sessions)")
-    async def install(self, package: str) -> str:
+    @tool(
+        description=(
+            "Install a pure-Python package (shared across all sessions). Optional "
+            "index_url targets a curated/private index instead of PyPI."
+        )
+    )
+    async def install(self, package: str, index_url: str | None = None) -> str:
         try:
-            await _pip.install(package)
+            await _pip.install(package, index_url=index_url)
         except Exception as exc:  # noqa: BLE001
             return f"install failed: {exc}"
-        return f"installed {package} (importable in any session via exec)"
+        where = index_url or "PyPI"
+        return f"installed {package} from {where} (importable in any session via exec)"

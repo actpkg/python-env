@@ -154,6 +154,15 @@ class _WasiHttpCompat(CompatibilityNotInPyodide):
         _FINDER.add_wheel(bytes(buffer), filename)
 
 
-async def install(package: str) -> None:
-    """Install a pure-Python package (and its pure deps) from PyPI; raises on failure."""
-    await PackageManager(_WasiHttpCompat).install(package)
+async def install(package: str, index_url: str | None = None) -> None:
+    """Install a pure-Python package (and its pure deps); raises on failure.
+
+    `index_url` overrides the package index (a PEP 503/691 "simple" index). Use it
+    to target a curated / private / air-gapped index instead of PyPI. The index
+    host must still be reachable under the `wasi:http` egress grant — restrict that
+    grant to your index host to *force* all installs through it (hardened supply
+    chain enforced by ACT's capability model, not by trusting the caller).
+    """
+    pm = PackageManager(_WasiHttpCompat)
+    kwargs = {"index_urls": [index_url]} if index_url else {}
+    await pm.install(package, **kwargs)
