@@ -18,7 +18,7 @@ build:
 test:
     #!/usr/bin/env bash
     set -euo pipefail
-    {{act}} run {{wasm}} --http --listen "{{addr}}" --session-args '{}' &
+    {{act}} run {{wasm}} --http --listen "{{addr}}" --session-args '{}' --allow wasi:http &
     trap "kill $!" EXIT
     curl --retry 60 --retry-connrefused --retry-delay 1 -fsS -o /dev/null {{baseurl}}/info
     {{hurl}} --test --variable "baseurl={{baseurl}}" e2e/*.hurl
