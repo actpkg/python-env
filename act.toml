@@ -1,6 +1,6 @@
 [std]
 name = "python-env"
-version = "0.14.0"
+version = "0.15.0"
 description = "Stateful, batteries-included Python environment for AI agents (per-session namespace, pure-Python libs + numpy + pandas, runtime pip install)"
 
 [std.capabilities."wasi:http"]
@@ -10,3 +10,10 @@ description = "Fetch pure-Python wheels from PyPI for the `install` tool. No oth
 host = "pypi.org"
 [[std.capabilities."wasi:http".allow]]
 host = "files.pythonhosted.org"
+
+[std.capabilities."wasi:filesystem"]
+description = "Read / write data files so exec can process serialized data (CSV, JSON, Parquet, images, …). Denied unless granted; path scope delegated to the host policy."
+
+[[std.capabilities."wasi:filesystem".allow]]
+path = "**"
+mode = "rw"

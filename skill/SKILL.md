@@ -17,6 +17,10 @@ Pyodide-style scientific Python as a hardened ACT component.
 `sqlite3` is built in — an in-process SQL database (`sqlite3.connect(":memory:")`
 needs no capabilities), great for joins/aggregations alongside numpy/pandas.
 
+`exec` can read/write files (CSV/JSON/Parquet/images) when granted
+`wasi:filesystem` (`--allow wasi:filesystem` or a scoped `--grant`); denied by
+default. The guest sees host paths directly, bounded by the grant.
+
 Tools: `exec(code)`, `reset_session()`, `install(package)`.
 
 `install(package)` adds a pure-Python (`*-none-any`) PyPI package at runtime;

@@ -44,6 +44,16 @@ test-net:
     curl --retry 240 --retry-connrefused --retry-delay 1 -fs -o /dev/null {{baseurl}}/info
     {{hurl}} --test --variable "baseurl={{baseurl}}" e2e/net/*.hurl
 
+# Filesystem e2e: exec reads/writes data files under a wasi:filesystem grant.
+# Separate from the hermetic suite (needs the grant); NOT publish-gating.
+test-fs:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    {{act}} run {{wasm}} --http --listen "{{addr}}" --session-args '{}' --allow wasi:filesystem &
+    trap "kill $!" EXIT
+    curl --retry 240 --retry-connrefused --retry-delay 1 -fs -o /dev/null {{baseurl}}/info
+    {{hurl}} --test --variable "baseurl={{baseurl}}" e2e/fs/*.hurl
+
 # Full "Pyodide-via-ACT" build: python-env WITH the scientific tier (numpy 2.5.0
 # + pandas 3.0.3) folded in, via the patched wasm-EH componentize-py. Requires the
 # local toolchain (SCI_TOOLCHAIN) and a wasm-EH-enabled act at runtime. The lean

@@ -17,6 +17,22 @@ For the locked-down stateless stdlib-only sandbox, use `python-eval` instead.
 | `reset_session` | Clear the session namespace |
 | `install` | Install a pure-Python (`*-none-any`) package from PyPI at runtime; importable in any session. Needs `wasi:http`. |
 
+## Filesystem access
+
+`exec` can read and write files — useful for processing serialized data (CSV,
+JSON, Parquet, images, …). It needs the **`wasi:filesystem`** capability and is
+**denied unless granted**: a headless run with no grant raises `PermissionError`.
+Grant the full ceiling with `--allow wasi:filesystem`, or scope it to a path:
+
+```bash
+act call python-env.wasm exec --session-args '{}' --args '{"code":"..."}' \
+  --grant '{"wasi:filesystem":{"mode":"allowlist","allow":[{"path":"/data/**","mode":"rw"}]}}'
+```
+
+The guest sees host paths directly, bounded by the granted scope — so the host
+policy decides exactly which files an agent can touch. A file-backed `sqlite3`
+DB uses the same grant.
+
 ## Built-in SQL
 
 `sqlite3` is compiled into the wasm CPython, so an in-process SQL database is
