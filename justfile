@@ -1,7 +1,11 @@
 wasm := "python-env.wasm"
 act := env("ACT", "act")
+actbuild := env("ACT_BUILD", "act-build")
 act-build := env("ACT_BUILD", "act-build")
 hurl := env("HURL", "hurl")
+registry := env("OCI_REGISTRY", "actpkg.dev/library")
+# Random port for the e2e server, in a safe range: above the well-known/common
+# dev ports and below the Linux outbound ephemeral range (32768+).
 port := `shuf -i 10000-29999 -n 1`
 addr := "[::1]:" + port
 baseurl := "http://" + addr
@@ -18,3 +22,19 @@ test:
     trap "kill $!" EXIT
     curl --retry 60 --retry-connrefused --retry-delay 1 -fsS -o /dev/null {{baseurl}}/info
     {{hurl}} --test --variable "baseurl={{baseurl}}" e2e/*.hurl
+
+publish:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    INFO=$({{act}} inspect component-manifest {{wasm}})
+    NAME=$(echo "$INFO" | jq -r .std.name)
+    VERSION=$(echo "$INFO" | jq -r .std.version)
+    OUTPUT=$({{actbuild}} push {{wasm}} "{{registry}}/$NAME:$VERSION" \
+      --skip-if-exists \
+      --also-tag latest 2>&1) || { echo "$OUTPUT" >&2; exit 1; }
+    echo "$OUTPUT"
+    DIGEST=$(echo "$OUTPUT" | grep "^Digest:" | awk '{print $2}' || true)
+    if [ -n "${GITHUB_OUTPUT:-}" ]; then
+      echo "image={{registry}}/$NAME" >> "$GITHUB_OUTPUT"
+      echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
+    fi

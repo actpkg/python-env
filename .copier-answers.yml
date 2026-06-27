@@ -1,0 +1,5 @@
+_commit: c04ed5a
+_src_path: https://github.com/actcore/act-template-python.git
+description: Stateful batteries-included Python environment
+needs_filesystem: false
+project_name: python-env
