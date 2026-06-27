@@ -13,7 +13,7 @@ import traceback
 
 from act_sdk import component, session_close, session_open, tool
 from act_sdk.bridge import SessionProvider, ToolProvider  # noqa: F401 — componentize-py entry points
-import _pip  # noqa: F401
+import _pip
 
 # Pre-import bundled batteries so componentize-py freezes them into the wasm.
 import attr as _attr  # noqa: F401
@@ -101,3 +101,11 @@ class PythonEnv:
         session.globals.clear()
         session.globals["__builtins__"] = __builtins__
         return "(session reset)"
+
+    @tool(description="Install a pure-Python package from PyPI (shared across all sessions)")
+    async def install(self, package: str) -> str:
+        try:
+            await _pip.install(package)
+        except Exception as exc:  # noqa: BLE001
+            return f"install failed: {exc}"
+        return f"installed {package} (importable in any session via exec)"
