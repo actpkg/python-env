@@ -1,12 +1,13 @@
 # python-env
 
 > Stateful, batteries-included Python for AI agents. One `.wasm`, per-session
-> namespaces, common pure-Python libraries built in.
+> namespaces, common pure-Python libraries — and real **numpy** — built in.
+> Pyodide-style scientific Python, but as a hardened ACT component.
 
 Each `act:sessions` session is a persistent Python namespace; separate
 sessions are isolated. Preloaded with curated pure-Python libraries (see
-below). No C extensions (use `python-eval` for the locked-down stateless
-sandbox; numpy is tracked separately).
+below), plus **numpy 2.5.0** in the published build (see [Scientific tier](#scientific-tier-numpy)).
+For the locked-down stateless stdlib-only sandbox, use `python-eval` instead.
 
 ## Tools
 | Tool | Description |
@@ -84,9 +85,32 @@ Constraints and honest limitations:
   session is the same object in another. Installs do not persist across a
   restart of the component.
 
+## Scientific tier: numpy
+
+The published `python-env` bundles **numpy 2.5.0** — the real C-extension numpy,
+cross-compiled to WebAssembly and folded into the component, running inside the
+ACT sandbox:
+
+```bash
+act call python-env.wasm exec \
+  --args '{"code":"import numpy as np; np.std(np.arange(10))"}' --session-args '{}'
+```
+
+numpy is pure compute — it needs **no capabilities**. SciPy and pandas are not
+included (SciPy is Fortran-blocked on wasm; pandas needs its own cross-build).
+
+**Build note.** numpy 2.x's pocketfft uses C++ exceptions, so the numpy build
+needs the wasm exception-handling (wasm-EH) toolchain — a patched componentize-py
+and a wasm-EH-enabled `act` runtime. The lean `just build` (stock toolchain, no
+numpy) stays CI-buildable for fast iteration and tests; the published artifact is
+built locally with `just build-numpy` (and tested with `just test-numpy` against a
+wasm-EH `act`). The EH toolchain build scripts live with the project design notes.
+
 ## Build
 ```bash
-just build && just test
+just build && just test          # lean: pure-Python, CI-buildable
+just build-numpy                 # full: + numpy 2.5.0 (needs the wasm-EH toolchain)
+ACT=/path/to/wasm-eh/act just test-numpy
 ```
 
 ## License

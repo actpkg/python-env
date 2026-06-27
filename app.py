@@ -29,6 +29,15 @@ import sortedcontainers as _sortedcontainers  # noqa: F401
 import tabulate as _tabulate  # noqa: F401
 import yaml as _yaml  # noqa: F401
 
+# Scientific tier: numpy is supplied on the componentize-py --python-path by the
+# `just build-numpy` recipe (the patched wasm-EH toolchain) and gets folded/frozen
+# here. In the lean `just build` (stock toolchain) numpy is absent, so this is
+# skipped and the component is unchanged.
+try:
+    import numpy as _numpy  # noqa: F401
+except ImportError:
+    pass
+
 
 class EnvSession:
     """Per-session persistent state: the namespace `exec` runs against."""
