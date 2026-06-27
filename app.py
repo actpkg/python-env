@@ -13,6 +13,7 @@ import traceback
 
 from act_sdk import component, session_close, session_open, tool
 from act_sdk.bridge import SessionProvider, ToolProvider  # noqa: F401 — componentize-py entry points
+import _pip  # noqa: F401
 
 # Pre-import bundled batteries so componentize-py freezes them into the wasm.
 import attr as _attr  # noqa: F401
