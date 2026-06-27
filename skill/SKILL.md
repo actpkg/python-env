@@ -10,8 +10,9 @@ metadata:
 A persistent Python environment for agents. Each session keeps its own
 namespace — define something in one `exec` call, use it in the next.
 Preloaded with common pure-Python libraries plus **numpy 2.5.0**,
-**pandas 3.0.3**, and **regex** (real C-extension libs, compiled to wasm) —
-Pyodide-style scientific Python as a hardened ACT component.
+**pandas 3.0.3**, **regex**, and **Pillow** (image processing — PNG/BMP/GIF/PPM,
+not JPEG) — real C-extension libs compiled to wasm. Pyodide-style scientific
+Python as a hardened ACT component.
 
 Tools: `exec(code)`, `reset_session()`, `install(package)`.
 

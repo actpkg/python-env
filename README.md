@@ -103,20 +103,26 @@ Constraints and honest limitations:
   session is the same object in another. Installs do not persist across a
   restart of the component.
 
-## Scientific tier: numpy + pandas + regex
+## Scientific tier: numpy + pandas + regex + Pillow
 
-The published `python-env` bundles **numpy 2.5.0**, **pandas 3.0.3**, and **regex**
-(the fast, extended `re` with fuzzy matching and Unicode properties) — real
-C-extension libraries, cross-compiled to WebAssembly and folded into the component,
-running inside the ACT sandbox:
+The published `python-env` bundles **numpy 2.5.0**, **pandas 3.0.3**, **regex**
+(fast/extended `re` with fuzzy matching + Unicode properties), and **Pillow**
+(image processing) — real C-extension libraries, cross-compiled to WebAssembly and
+folded into the component, running inside the ACT sandbox:
 
 ```bash
 act call python-env.wasm exec --session-args '{}' \
   --args '{"code":"import pandas as pd; pd.DataFrame({\"x\":[1,2,3]}).x.sum()"}'
 ```
 
-Both are pure compute — they need **no capabilities**. SciPy is not included
+All are pure compute — they need **no capabilities**. SciPy is not included
 (Fortran is unavailable on wasm).
+
+**Pillow** does PNG / BMP / GIF / PPM (create, transform, encode → bytes; works
+with numpy via `np.asarray`). **JPEG is not built in** — libjpeg's `setjmp` error
+handling lowers to a wasm SjLj `__c_longjmp` tag that componentize-py can't fold;
+PNG (via zlib) needs no `setjmp`. Text rendering (`ImageFont`, freetype) is also
+not built in yet.
 
 pandas is broadly functional: `DataFrame`/`Series`, numeric reductions,
 arithmetic, `groupby`, and **datetime / time-series** (`to_datetime`,

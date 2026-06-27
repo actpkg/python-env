@@ -58,6 +58,25 @@ try:
     import regex as _regex  # noqa: F401 — C-ext fast/extended re (sci build)
 except ImportError:
     pass
+try:
+    # Pillow (sci build). Pre-import the format plugins + helpers it otherwise
+    # lazy-loads, so they're frozen (componentize-py snapshots only what's reached).
+    import PIL.Image  # noqa: F401
+    import PIL.ImageFile  # noqa: F401
+    import PIL.PngImagePlugin  # noqa: F401
+    import PIL.BmpImagePlugin  # noqa: F401
+    import PIL.GifImagePlugin  # noqa: F401
+    import PIL.PpmImagePlugin  # noqa: F401
+    import PIL.ImageDraw  # noqa: F401
+    import PIL.ImageOps  # noqa: F401
+    import PIL.ImageFilter  # noqa: F401
+    import PIL.ImageColor  # noqa: F401
+    import PIL.ImageChops  # noqa: F401
+    import PIL.ImageEnhance  # noqa: F401
+    import PIL.ImageStat  # noqa: F401
+    import PIL.ImageMath  # noqa: F401
+except ImportError:
+    pass
 
 
 class EnvSession:
