@@ -10,6 +10,7 @@ registry := env("OCI_REGISTRY", "actpkg.dev/library")
 sci-toolchain := env("SCI_TOOLCHAIN", justfile_directory() / "../../.sci-toolchain")
 patched-cpy := sci-toolchain / "componentize-py-eh"
 numpy-pkg := sci-toolchain / "numpy-eh-pkg"
+pandas-pkg := sci-toolchain / "pandas-eh-pkg"
 # Random port for the e2e server, in a safe range: above the well-known/common
 # dev ports and below the Linux outbound ephemeral range (32768+).
 port := `shuf -i 10000-29999 -n 1`
@@ -37,26 +38,28 @@ test-net:
     curl --retry 60 --retry-connrefused --retry-delay 1 -fsS -o /dev/null {{baseurl}}/info
     {{hurl}} --test --variable "baseurl={{baseurl}}" e2e/net/*.hurl
 
-# Full "Pyodide-via-ACT" build: python-env WITH numpy 2.5.0 folded in, via the
-# patched wasm-EH componentize-py. Requires the local toolchain (SCI_TOOLCHAIN)
-# and a wasm-EH-enabled act at runtime. The lean `build` stays CI-buildable; this
-# one is built locally. See act-context/docs/specs/2026-06-27-python-env-phase3-toolchain/.
-build-numpy:
+# Full "Pyodide-via-ACT" build: python-env WITH the scientific tier (numpy 2.5.0
+# + pandas 3.0.3) folded in, via the patched wasm-EH componentize-py. Requires the
+# local toolchain (SCI_TOOLCHAIN) and a wasm-EH-enabled act at runtime. The lean
+# `build` stays CI-buildable; this one is built locally. sci-stubs/ supplies a few
+# WASI-absent stdlib shims (mmap) the scientific libs import.
+# See act-context/docs/specs/2026-06-27-python-env-phase3-toolchain/.
+build-sci:
     uv sync --reinstall-package act-sdk
     {{patched-cpy}} -d wit -w component-world componentize \
-      -p .venv/lib/python3.14/site-packages -p {{numpy-pkg}} -p . \
+      -p .venv/lib/python3.14/site-packages -p {{numpy-pkg}} -p {{pandas-pkg}} -p sci-stubs -p . \
       -o {{wasm}} app
     {{act-build}} pack {{wasm}}
 
-# e2e for the numpy tier. Needs `just build-numpy` first AND a wasm-EH act:
-#   ACT=/path/to/wasm-eh/act just test-numpy
-test-numpy:
+# e2e for the scientific tier. Needs `just build-sci` first AND a wasm-EH act:
+#   ACT=/path/to/wasm-eh/act just test-sci
+test-sci:
     #!/usr/bin/env bash
     set -euo pipefail
     {{act}} run {{wasm}} --http --listen "{{addr}}" --session-args '{}' &
     trap "kill $!" EXIT
     curl --retry 60 --retry-connrefused --retry-delay 1 -fsS -o /dev/null {{baseurl}}/info
-    {{hurl}} --test --variable "baseurl={{baseurl}}" e2e/numpy/*.hurl
+    {{hurl}} --test --variable "baseurl={{baseurl}}" e2e/sci/*.hurl
 
 publish:
     #!/usr/bin/env bash

@@ -1,12 +1,13 @@
 # python-env
 
 > Stateful, batteries-included Python for AI agents. One `.wasm`, per-session
-> namespaces, common pure-Python libraries — and real **numpy** — built in.
+> namespaces, common pure-Python libraries — and real **numpy + pandas** — built in.
 > Pyodide-style scientific Python, but as a hardened ACT component.
 
 Each `act:sessions` session is a persistent Python namespace; separate
 sessions are isolated. Preloaded with curated pure-Python libraries (see
-below), plus **numpy 2.5.0** in the published build (see [Scientific tier](#scientific-tier-numpy)).
+below), plus **numpy 2.5.0** and **pandas 3.0.3** in the published build
+(see [Scientific tier](#scientific-tier-numpy--pandas)).
 For the locked-down stateless stdlib-only sandbox, use `python-eval` instead.
 
 ## Tools
@@ -85,32 +86,41 @@ Constraints and honest limitations:
   session is the same object in another. Installs do not persist across a
   restart of the component.
 
-## Scientific tier: numpy
+## Scientific tier: numpy + pandas
 
-The published `python-env` bundles **numpy 2.5.0** — the real C-extension numpy,
-cross-compiled to WebAssembly and folded into the component, running inside the
-ACT sandbox:
+The published `python-env` bundles **numpy 2.5.0** and **pandas 3.0.3** — the real
+C-extension libraries, cross-compiled to WebAssembly and folded into the component,
+running inside the ACT sandbox:
 
 ```bash
-act call python-env.wasm exec \
-  --args '{"code":"import numpy as np; np.std(np.arange(10))"}' --session-args '{}'
+act call python-env.wasm exec --session-args '{}' \
+  --args '{"code":"import pandas as pd; pd.DataFrame({\"x\":[1,2,3]}).x.sum()"}'
 ```
 
-numpy is pure compute — it needs **no capabilities**. SciPy and pandas are not
-included (SciPy is Fortran-blocked on wasm; pandas needs its own cross-build).
+Both are pure compute — they need **no capabilities**. SciPy is not included
+(Fortran is unavailable on wasm).
 
-**Build note.** numpy 2.x's pocketfft uses C++ exceptions, so the numpy build
+**pandas — known limitation.** Core pandas works: `DataFrame`/`Series`
+construction, numeric reductions, arithmetic, and `groupby` (the Cython `_libs`
+extensions). **datetime / time-series is currently broken** — a numpy-2.x datetime
+metadata ABI mismatch in pandas' tslibs makes `to_datetime` and `datetime64`
+dtypes raise; under investigation. Use numpy datetimes or stick to numeric frames
+for now. Compression I/O (`bz2`/`lzma`), memory-mapped reads, and the dataframe
+interchange protocol are also unavailable (WASI lacks the underlying modules).
+
+**Build note.** numpy 2.x's pocketfft uses C++ exceptions, so the scientific build
 needs the wasm exception-handling (wasm-EH) toolchain — a patched componentize-py
 and a wasm-EH-enabled `act` runtime. The lean `just build` (stock toolchain, no
-numpy) stays CI-buildable for fast iteration and tests; the published artifact is
-built locally with `just build-numpy` (and tested with `just test-numpy` against a
-wasm-EH `act`). The EH toolchain build scripts live with the project design notes.
+numpy/pandas) stays CI-buildable for fast iteration and tests; the published
+artifact is built locally with `just build-sci` (and tested with `just test-sci`
+against a wasm-EH `act`). The EH toolchain build scripts live with the project
+design notes.
 
 ## Build
 ```bash
 just build && just test          # lean: pure-Python, CI-buildable
-just build-numpy                 # full: + numpy 2.5.0 (needs the wasm-EH toolchain)
-ACT=/path/to/wasm-eh/act just test-numpy
+just build-sci                   # full: + numpy 2.5.0 + pandas 3.0.3 (wasm-EH toolchain)
+ACT=/path/to/wasm-eh/act just test-sci
 ```
 
 ## License
