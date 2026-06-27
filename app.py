@@ -67,6 +67,10 @@ try:
 except ImportError:
     pass
 try:
+    import bottleneck as _bottleneck  # noqa: F401 — fast NaN-aware array funcs (sci build)
+except ImportError:
+    pass
+try:
     import lxml.etree  # noqa: F401 — XML/HTML parsing + XPath (sci build)
     import lxml.html  # noqa: F401
 except ImportError:
