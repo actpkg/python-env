@@ -1,0 +1,7 @@
+# Registry mapping for ACT and WASI WIT packages (used by `just init` via WKG_CONFIG_FILE).
+#
+# The `act` namespace resolves to the actcore.dev wasm-pkg registry.
+# The `wasi` namespace resolves to wasi.dev (backed by ghcr.io/webassembly).
+[namespace_registries]
+act = "actcore.dev"
+wasi = "wasi.dev"

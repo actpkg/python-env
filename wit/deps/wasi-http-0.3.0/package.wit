@@ -458,3 +458,52 @@ interface client {
   /// network or to forward it to another component.
   send: async func(request: request) -> result<response, error-code>;
 }
+
+/// The `wasi:http/service` world captures a broad category of HTTP services
+/// including web applications, API servers, and proxies. It may be `include`d
+/// in more specific worlds such as `wasi:http/middleware`.
+@since(version = 0.3.0)
+world service {
+  import wasi:cli/types@0.3.0;
+  import wasi:cli/stdout@0.3.0;
+  import wasi:cli/stderr@0.3.0;
+  import wasi:cli/stdin@0.3.0;
+  import wasi:clocks/types@0.3.0;
+  import types;
+  import client;
+  import wasi:clocks/monotonic-clock@0.3.0;
+  import wasi:clocks/system-clock@0.3.0;
+  @unstable(feature = clocks-timezone)
+  import wasi:clocks/timezone@0.3.0;
+  import wasi:random/random@0.3.0;
+  import wasi:random/insecure@0.3.0;
+  import wasi:random/insecure-seed@0.3.0;
+
+  export handler;
+}
+/// The `wasi:http/middleware` world captures HTTP services that forward HTTP
+/// Requests to another handler.
+///
+/// Components may implement this world to allow them to participate in handler
+/// "chains" where a `request` flows through handlers on its way to some terminal
+/// `service` and corresponding `response` flows in the opposite direction.
+@since(version = 0.3.0)
+world middleware {
+  import wasi:clocks/types@0.3.0;
+  import types;
+  import handler;
+  import wasi:cli/types@0.3.0;
+  import wasi:cli/stdout@0.3.0;
+  import wasi:cli/stderr@0.3.0;
+  import wasi:cli/stdin@0.3.0;
+  import client;
+  import wasi:clocks/monotonic-clock@0.3.0;
+  import wasi:clocks/system-clock@0.3.0;
+  @unstable(feature = clocks-timezone)
+  import wasi:clocks/timezone@0.3.0;
+  import wasi:random/random@0.3.0;
+  import wasi:random/insecure@0.3.0;
+  import wasi:random/insecure-seed@0.3.0;
+
+  export handler;
+}
