@@ -18,5 +18,5 @@ Tools: `exec(code)`, `reset_session()`, `install(package)`.
 `install(package)` adds a pure-Python (`*-none-any`) PyPI package at runtime;
 it then imports in any session. Requires the `wasi:http` capability. Non-pure
 (C-extension) packages can't be installed at runtime — but numpy and pandas are
-built in. pandas core (frames, numeric, groupby) works; pandas datetime/
-time-series is a known limitation in this build.
+built in. pandas is broadly functional including datetime/time-series; only niche
+I/O (compression, memory-mapped reads, dataframe interchange) is unavailable.

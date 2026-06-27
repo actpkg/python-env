@@ -35,6 +35,17 @@ import yaml as _yaml  # noqa: F401
 # absent, so each is skipped and the component is unchanged.
 try:
     import numpy as _numpy  # noqa: F401
+
+    # numpy lazy-loads these submodules via numpy.__getattr__; componentize-py only
+    # freezes statically-reached modules, so import them here for pandas to use.
+    import numpy.char  # noqa: F401
+    import numpy.fft  # noqa: F401
+    import numpy.lib  # noqa: F401
+    import numpy.linalg  # noqa: F401
+    import numpy.ma  # noqa: F401
+    import numpy.polynomial  # noqa: F401
+    import numpy.rec  # noqa: F401
+    import numpy.strings  # noqa: F401
 except ImportError:
     pass
 try:

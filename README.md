@@ -100,13 +100,13 @@ act call python-env.wasm exec --session-args '{}' \
 Both are pure compute — they need **no capabilities**. SciPy is not included
 (Fortran is unavailable on wasm).
 
-**pandas — known limitation.** Core pandas works: `DataFrame`/`Series`
-construction, numeric reductions, arithmetic, and `groupby` (the Cython `_libs`
-extensions). **datetime / time-series is currently broken** — a numpy-2.x datetime
-metadata ABI mismatch in pandas' tslibs makes `to_datetime` and `datetime64`
-dtypes raise; under investigation. Use numpy datetimes or stick to numeric frames
-for now. Compression I/O (`bz2`/`lzma`), memory-mapped reads, and the dataframe
-interchange protocol are also unavailable (WASI lacks the underlying modules).
+pandas is broadly functional: `DataFrame`/`Series`, numeric reductions,
+arithmetic, `groupby`, and **datetime / time-series** (`to_datetime`,
+`date_range`, the `.dt` accessor — the build pins `NPY_TARGET_VERSION` to numpy
+2.0 so pandas' tslibs reads the numpy datetime metadata with the right ABI).
+What's **not** available: compression I/O (`bz2`/`lzma`), memory-mapped reads,
+and the dataframe interchange protocol — WASI CPython lacks the underlying
+modules (`bz2`/`lzma`/`mmap`/`ctypes`), so those niche paths are stubbed or guarded.
 
 **Build note.** numpy 2.x's pocketfft uses C++ exceptions, so the scientific build
 needs the wasm exception-handling (wasm-EH) toolchain — a patched componentize-py
