@@ -13,7 +13,7 @@ For the locked-down stateless stdlib-only sandbox, use `python-eval` instead.
 ## Tools
 | Tool | Description |
 |------|-------------|
-| `exec` | Run Python against the session namespace; returns combined stdout/result/traceback |
+| `exec` | Run Python against the session namespace; returns combined stdout/result/traceback. Call `show(data, mime=None)` to also return binary/image parts (e.g. a PNG from Pillow) |
 | `reset_session` | Clear the session namespace |
 | `install` | Install a pure-Python (`*-none-any`) package from PyPI at runtime; importable in any session. Needs `wasi:http`. |
 
@@ -127,7 +127,9 @@ All are pure compute — they need **no capabilities**. SciPy is not included
 (Fortran is unavailable on wasm).
 
 **Pillow** does PNG / BMP / GIF / PPM (create, transform, encode → bytes; works
-with numpy via `np.asarray`). **JPEG is not built in** — libjpeg's `setjmp` error
+with numpy via `np.asarray`). Return an image to the caller with
+`show(buf.getvalue())` — `exec` emits it as an `image/png` content part next to
+the text result (mime is sniffed from the bytes, or pass it explicitly). **JPEG is not built in** — libjpeg's `setjmp` error
 handling lowers to a wasm SjLj `__c_longjmp` tag that componentize-py can't fold;
 PNG (via zlib) needs no `setjmp`. Text rendering (`ImageFont`, freetype) is also
 not built in yet.

@@ -12,7 +12,7 @@ import sys
 import traceback
 
 import _wasi_compat  # noqa: F401 — inject ctypes stub etc. BEFORE anything imports them
-from act_sdk import component, session_close, session_open, tool
+from act_sdk import Content, Multi, component, session_close, session_open, tool
 from act_sdk.bridge import SessionProvider, ToolProvider  # noqa: F401 — componentize-py entry points
 import _freeze_stdlib  # noqa: F401 — freezes the full stdlib so `install`ed pkgs work
 import _pip
@@ -103,14 +103,58 @@ class EnvSession:
         self.globals: dict = {"__builtins__": __builtins__}
 
 
-def _run(code: str, ns: dict) -> str:
-    """Execute *code* against *ns*, returning a text representation of the result.
+# Leading bytes → MIME, so `show(img_bytes)` can name the part without the
+# caller passing a mime. Anything unrecognised is opaque octet-stream.
+_MAGIC: list[tuple[bytes, str]] = [
+    (b"\x89PNG\r\n\x1a\n", "image/png"),
+    (b"\xff\xd8\xff", "image/jpeg"),
+    (b"GIF87a", "image/gif"),
+    (b"GIF89a", "image/gif"),
+    (b"%PDF-", "application/pdf"),
+    (b"<svg", "image/svg+xml"),
+]
+
+
+def _sniff_mime(data: bytes) -> str:
+    for magic, mime in _MAGIC:
+        if data.startswith(magic):
+            return mime
+    return "application/octet-stream"
+
+
+def _make_show(parts: list):
+    """`show(data, mime=None)` — emit an extra content part from an exec call.
+
+    Lets `exec` return real binary output (e.g. a PNG from Pillow) alongside the
+    text result. `data` may be bytes (mime sniffed if omitted) or str.
+    """
+
+    def show(data, mime: str | None = None) -> None:
+        if isinstance(data, str):
+            parts.append(Content(mime or "text/plain", data.encode("utf-8")))
+        elif isinstance(data, (bytes, bytearray)):
+            b = bytes(data)
+            parts.append(Content(mime or _sniff_mime(b), b))
+        else:
+            raise TypeError("show() expects bytes or str")
+
+    return show
+
+
+def _run(code: str, ns: dict) -> object:
+    """Execute *code* against *ns*, returning the result.
+
+    Returns the text representation (stdout + last-expression repr + errors). If
+    the code called ``show(...)`` to emit binary/image parts, returns a ``Multi``
+    of the text followed by those parts instead.
 
     Uses the IPython-style "last expression" heuristic: if the last top-level
     statement is a bare expression, eval it to capture its repr; exec the
     preceding statements first so side-effects (assignments, imports) land in
     the namespace before the expression is evaluated.
     """
+    content_parts: list = []
+    ns["show"] = _make_show(content_parts)
     old_out, old_err = sys.stdout, sys.stderr
     cap_out, cap_err = io.StringIO(), io.StringIO()
     sys.stdout, sys.stderr = cap_out, cap_err
@@ -145,7 +189,11 @@ def _run(code: str, ns: dict) -> str:
         parts.append(f"[stderr]\n{err}")
     if error_text:
         parts.append(f"[error]\n{error_text}")
-    return "\n".join(parts) if parts else "(no output)"
+    text = "\n".join(parts) if parts else "(no output)"
+    if content_parts:
+        # text first (only if there was any), then the emitted binary parts.
+        return Multi(*([text] if parts else []), *content_parts)
+    return text
 
 
 @component
@@ -158,8 +206,14 @@ class PythonEnv:
     def close(self, session: EnvSession) -> None:
         session.globals.clear()
 
-    @tool(description="Execute Python against this session's persistent namespace")
-    async def exec(self, code: str, *, session: EnvSession) -> str:
+    @tool(
+        description=(
+            "Execute Python against this session's persistent namespace. Call "
+            "show(data, mime=None) to return binary/image output (e.g. a PNG "
+            "from Pillow) alongside the text result."
+        )
+    )
+    async def exec(self, code: str, *, session: EnvSession) -> object:
         return _run(code, session.globals)
 
     @tool(description="Clear all variables/imports in this session's namespace")

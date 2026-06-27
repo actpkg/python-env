@@ -1,6 +1,6 @@
 [std]
 name = "python-env"
-version = "0.12.0"
+version = "0.13.0"
 description = "Stateful, batteries-included Python environment for AI agents (per-session namespace, pure-Python libs + numpy + pandas, runtime pip install)"
 
 [std.capabilities."wasi:http"]
