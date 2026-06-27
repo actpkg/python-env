@@ -14,6 +14,20 @@ import traceback
 from act_sdk import component, session_close, session_open, tool
 from act_sdk.bridge import SessionProvider, ToolProvider  # noqa: F401 — componentize-py entry points
 
+# Pre-import bundled batteries so componentize-py freezes them into the wasm.
+import attr as _attr  # noqa: F401
+import bs4 as _bs4  # noqa: F401
+import dateutil as _dateutil  # noqa: F401
+import jinja2 as _jinja2  # noqa: F401
+import markdown as _markdown  # noqa: F401
+import more_itertools as _more_itertools  # noqa: F401
+import mpmath as _mpmath  # noqa: F401
+import rich as _rich  # noqa: F401
+import slugify as _slugify  # noqa: F401
+import sortedcontainers as _sortedcontainers  # noqa: F401
+import tabulate as _tabulate  # noqa: F401
+import yaml as _yaml  # noqa: F401
+
 
 class EnvSession:
     """Per-session persistent state: the namespace `exec` runs against."""

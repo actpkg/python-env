@@ -6,6 +6,18 @@ requires-python = ">=3.14"
 dependencies = [
     "act-sdk>=0.5.0",
     "cbor2>=5.9.0,<6",
+    "jinja2",
+    "markdown",
+    "beautifulsoup4",
+    "rich",
+    "tabulate",
+    "python-slugify",
+    "pyyaml",
+    "python-dateutil",
+    "attrs",
+    "more-itertools",
+    "sortedcontainers",
+    "mpmath",
 ]
 
 [tool.uv.sources]

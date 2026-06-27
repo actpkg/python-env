@@ -15,7 +15,40 @@ sandbox; numpy is tracked separately).
 | `reset_session` | Clear the session namespace |
 
 ## Bundled libraries
-(Filled in by Task 2.)
+
+The following pure-Python libraries are frozen into the wasm at build time and
+available to every `exec` call without any installation step.
+
+### Text / Templating
+| Package | Import as | Notes |
+|---------|-----------|-------|
+| `jinja2` | `import jinja2` | Jinja2 template engine |
+| `markdown` | `import markdown` | Markdown → HTML converter |
+| `beautifulsoup4` | `from bs4 import BeautifulSoup` | HTML/XML parser |
+| `rich` | `import rich` | Rich text and formatting |
+| `tabulate` | `from tabulate import tabulate` | ASCII/HTML table formatter |
+| `python-slugify` | `import slugify` | Unicode-aware slug generator |
+| `pyyaml` | `import yaml` | YAML parser (pure-Python path; C ext not in WASI) |
+
+### Data / Utilities
+| Package | Import as | Notes |
+|---------|-----------|-------|
+| `python-dateutil` | `import dateutil` | Date/time parsing and relativedelta |
+| `attrs` | `import attr` | Class boilerplate reduction |
+| `more-itertools` | `import more_itertools` | Extended itertools recipes |
+| `sortedcontainers` | `from sortedcontainers import SortedList` | Sorted list/dict/set |
+
+### Math / Symbolic
+| Package | Import as | Notes |
+|---------|-----------|-------|
+| `mpmath` | `import mpmath` | Arbitrary-precision floating-point math |
+
+### Dropped candidates (incompatible with WASI / componentize-py)
+| Package | Reason |
+|---------|--------|
+| `jsonschema` | Transitively requires `rpds` (Rust C extension via `referencing`) |
+| `networkx` | Requires `bz2` → `_bz2` C extension (not available in WASI) |
+| `sympy` | Requires `ctypes` → `_ctypes` C extension (not available in WASI) |
 
 ## Build
 ```bash
