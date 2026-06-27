@@ -17,6 +17,13 @@ For the locked-down stateless stdlib-only sandbox, use `python-eval` instead.
 | `reset_session` | Clear the session namespace |
 | `install` | Install a pure-Python (`*-none-any`) package from PyPI at runtime; importable in any session. Needs `wasi:http`. |
 
+## Built-in SQL
+
+`sqlite3` is compiled into the wasm CPython, so an in-process SQL database is
+available with **no capabilities** for an in-memory DB (`sqlite3.connect(":memory:")`)
+— load data into tables, run joins/aggregations, alongside the Python namespace.
+A file-backed DB needs `wasi:filesystem`. Works in both the lean and full builds.
+
 ## Bundled libraries
 
 The following pure-Python libraries are frozen into the wasm at build time and

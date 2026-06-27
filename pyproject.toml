@@ -1,6 +1,6 @@
 [project]
 name = "python-env"
-version = "0.8.0"
+version = "0.8.1"
 description = "Stateful, batteries-included Python environment for AI agents"
 requires-python = ">=3.14"
 dependencies = [
