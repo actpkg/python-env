@@ -80,6 +80,7 @@ try:
     # lazy-loads, so they're frozen (componentize-py snapshots only what's reached).
     import PIL.Image  # noqa: F401
     import PIL.ImageFile  # noqa: F401
+    import PIL.ImageFont  # noqa: F401  # freetype text rendering
     import PIL.PngImagePlugin  # noqa: F401
     import PIL.JpegImagePlugin  # noqa: F401
     import PIL.BmpImagePlugin  # noqa: F401

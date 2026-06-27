@@ -148,7 +148,9 @@ works with numpy via `np.asarray`). Return an image to the caller with
 content part next to the text result (mime sniffed from the bytes, or pass it).
 JPEG works because libjpeg's `setjmp` (which lowers to a wasm SjLj `__c_longjmp`
 tag) is folded via a patched componentize-py + the modern `try_table` EH encoding.
-Text rendering (`ImageFont`, freetype) is not built in yet.
+**Text rendering** works too: `ImageFont.load_default()` draws with a built-in
+bitmap font (no file), and `ImageFont.truetype(path, size)` renders scalable
+fonts via freetype from a `.ttf` (needs a `wasi:filesystem` grant for the file).
 
 pandas is broadly functional: `DataFrame`/`Series`, numeric reductions,
 arithmetic, `groupby`, and **datetime / time-series** (`to_datetime`,

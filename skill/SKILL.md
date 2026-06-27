@@ -10,7 +10,7 @@ metadata:
 A persistent Python environment for agents. Each session keeps its own
 namespace — define something in one `exec` call, use it in the next.
 Preloaded with common pure-Python libraries plus **numpy 2.5.0**,
-**pandas 3.0.3**, **regex**, **Pillow** (images — PNG/BMP/GIF/PPM, not JPEG), and
+**pandas 3.0.3**, **regex**, **Pillow** (images — PNG/JPEG/BMP/GIF/PPM + text via ImageFont), and
 **msgpack** (binary serialization), **lxml** (XML/HTML+XPath), **lz4** (compression), **bottleneck** (fast NaN array stats) — real C-extension libs compiled to wasm.
 Pyodide-style scientific Python as a hardened ACT component.
 
