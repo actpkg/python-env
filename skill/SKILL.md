@@ -16,7 +16,8 @@ scientific Python as a hardened ACT component.
 Tools: `exec(code)`, `reset_session()`, `install(package)`.
 
 `install(package)` adds a pure-Python (`*-none-any`) PyPI package at runtime;
-it then imports in any session. Requires the `wasi:http` capability. Non-pure
-(C-extension) packages can't be installed at runtime — but numpy and pandas are
-built in. pandas is broadly functional including datetime/time-series; only niche
-I/O (compression, memory-mapped reads, dataframe interchange) is unavailable.
+it then imports in any session. Requires the `wasi:http` capability. The full
+CPython stdlib is frozen in, so most of the pure-Python ecosystem works
+(e.g. `sympy`, `networkx`). Packages needing compiled extensions (Rust/C, e.g.
+`pydantic-core`) are rejected — but numpy and pandas are built in (incl. pandas
+datetime/time-series).

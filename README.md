@@ -50,24 +50,32 @@ available to every `exec` call without any installation step.
 | Package | Reason |
 |---------|--------|
 | `jsonschema` | Transitively requires `rpds` (Rust C extension via `referencing`) |
-| `networkx` | Requires `bz2` → `_bz2` C extension (not available in WASI) |
-| `sympy` | Requires `ctypes` → `_ctypes` C extension (not available in WASI) |
+
+(`networkx` and `sympy` were dropped as *bundled* batteries but now **install at
+runtime** — the full stdlib is frozen in and WASI-absent modules are stubbed.)
 
 ## Installing more packages
 
 `install(package)` fetches a package (and its dependencies) from PyPI at
-runtime and makes it importable in `exec`:
+runtime and makes it importable in `exec`. The full CPython stdlib is frozen
+into the component, so most of the pure-Python ecosystem works — e.g.:
 
 ```
-act call python-env.wasm install --args '{"package":"prettytable"}' --allow wasi:http
+act call python-env.wasm install --args '{"package":"sympy"}' --allow wasi:http
+act call python-env.wasm install --args '{"package":"networkx"}' --allow wasi:http
 ```
 
 Constraints and honest limitations:
 
 - **Pure-Python wheels only.** Only `*-none-any` wheels are accepted. Anything
-  with a compiled extension (`numpy`, `pandas`, `pydantic-core`, …) is rejected
-  with "Can't find a pure Python 3 wheel". The curated scientific tier (numpy)
-  is tracked separately.
+  with a compiled extension (`pydantic-core` (Rust), …) is rejected with "Can't
+  find a pure Python 3 wheel". numpy/pandas are built in (scientific tier above),
+  not installed.
+- **WASI-absent stdlib modules are stubbed.** `ctypes` (FFI), `bz2`/`lzma`
+  (compression), and `mmap` don't exist under WASI CPython, so they're shimmed:
+  `import` succeeds (packages that merely size C types or *probe* for an optional
+  native library work), but actually using FFI / compression / memory-mapping
+  raises. A package whose core path needs real FFI won't work.
 - **Network is the one exposed surface.** `install` is the only feature that
   reaches the network, and only to PyPI. It requires the `wasi:http` capability
   (`--allow wasi:http`); without a grant it is denied. The host policy bounds

@@ -27,7 +27,7 @@ test:
     set -euo pipefail
     {{act}} run {{wasm}} --http --listen "{{addr}}" --session-args '{}' &
     trap "kill $!" EXIT
-    curl --retry 60 --retry-connrefused --retry-delay 1 -fsS -o /dev/null {{baseurl}}/info
+    curl --retry 240 --retry-connrefused --retry-delay 1 -fs -o /dev/null {{baseurl}}/info
     {{hurl}} --test --variable "baseurl={{baseurl}}" e2e/*.hurl
 
 test-net:
@@ -35,19 +35,19 @@ test-net:
     set -euo pipefail
     {{act}} run {{wasm}} --http --listen "{{addr}}" --session-args '{}' --allow wasi:http &
     trap "kill $!" EXIT
-    curl --retry 60 --retry-connrefused --retry-delay 1 -fsS -o /dev/null {{baseurl}}/info
+    curl --retry 240 --retry-connrefused --retry-delay 1 -fs -o /dev/null {{baseurl}}/info
     {{hurl}} --test --variable "baseurl={{baseurl}}" e2e/net/*.hurl
 
 # Full "Pyodide-via-ACT" build: python-env WITH the scientific tier (numpy 2.5.0
 # + pandas 3.0.3) folded in, via the patched wasm-EH componentize-py. Requires the
 # local toolchain (SCI_TOOLCHAIN) and a wasm-EH-enabled act at runtime. The lean
-# `build` stays CI-buildable; this one is built locally. sci-stubs/ supplies a few
-# WASI-absent stdlib shims (mmap) the scientific libs import.
+# `build` stays CI-buildable; this one is built locally. WASI-absent stdlib shims
+# (ctypes/bz2/lzma/mmap) live in _wasi_compat.py and apply to both builds.
 # See act-context/docs/specs/2026-06-27-python-env-phase3-toolchain/.
 build-sci:
     uv sync --reinstall-package act-sdk
     {{patched-cpy}} -d wit -w component-world componentize \
-      -p .venv/lib/python3.14/site-packages -p {{numpy-pkg}} -p {{pandas-pkg}} -p sci-stubs -p . \
+      -p .venv/lib/python3.14/site-packages -p {{numpy-pkg}} -p {{pandas-pkg}} -p . \
       -o {{wasm}} app
     {{act-build}} pack {{wasm}}
 
@@ -58,7 +58,7 @@ test-sci:
     set -euo pipefail
     {{act}} run {{wasm}} --http --listen "{{addr}}" --session-args '{}' &
     trap "kill $!" EXIT
-    curl --retry 60 --retry-connrefused --retry-delay 1 -fsS -o /dev/null {{baseurl}}/info
+    curl --retry 240 --retry-connrefused --retry-delay 1 -fs -o /dev/null {{baseurl}}/info
     {{hurl}} --test --variable "baseurl={{baseurl}}" e2e/sci/*.hurl
 
 publish:

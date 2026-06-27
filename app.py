@@ -11,8 +11,10 @@ import io
 import sys
 import traceback
 
+import _wasi_compat  # noqa: F401 — inject ctypes stub etc. BEFORE anything imports them
 from act_sdk import component, session_close, session_open, tool
 from act_sdk.bridge import SessionProvider, ToolProvider  # noqa: F401 — componentize-py entry points
+import _freeze_stdlib  # noqa: F401 — freezes the full stdlib so `install`ed pkgs work
 import _pip
 
 # Pre-import bundled batteries so componentize-py freezes them into the wasm.
