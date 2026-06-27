@@ -13,6 +13,7 @@ numpy-pkg := sci-toolchain / "numpy-eh-pkg"
 pandas-pkg := sci-toolchain / "pandas-eh-pkg"
 regex-pkg := sci-toolchain / "regex-pkg"
 msgpack-pkg := sci-toolchain / "msgpack-pkg"
+lxml-pkg := sci-toolchain / "lxml-pkg"
 pillow-pkg := sci-toolchain / "pillow-pkg"
 # Random port for the e2e server, in a safe range: above the well-known/common
 # dev ports and below the Linux outbound ephemeral range (32768+).
@@ -50,7 +51,7 @@ test-net:
 build-sci:
     uv sync --reinstall-package act-sdk
     {{patched-cpy}} -d wit -w component-world componentize \
-      -p .venv/lib/python3.14/site-packages -p {{numpy-pkg}} -p {{pandas-pkg}} -p {{regex-pkg}} -p {{pillow-pkg}} -p {{msgpack-pkg}} -p . \
+      -p .venv/lib/python3.14/site-packages -p {{numpy-pkg}} -p {{pandas-pkg}} -p {{regex-pkg}} -p {{pillow-pkg}} -p {{msgpack-pkg}} -p {{lxml-pkg}} -p . \
       -o {{wasm}} app
     {{act-build}} pack {{wasm}}
 

@@ -63,6 +63,11 @@ try:
 except ImportError:
     pass
 try:
+    import lxml.etree  # noqa: F401 — XML/HTML parsing + XPath (sci build)
+    import lxml.html  # noqa: F401
+except ImportError:
+    pass
+try:
     # Pillow (sci build). Pre-import the format plugins + helpers it otherwise
     # lazy-loads, so they're frozen (componentize-py snapshots only what's reached).
     import PIL.Image  # noqa: F401
