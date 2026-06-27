@@ -54,6 +54,10 @@ try:
     import pandas as _pandas  # noqa: F401
 except ImportError:
     pass
+try:
+    import regex as _regex  # noqa: F401 — C-ext fast/extended re (sci build)
+except ImportError:
+    pass
 
 
 class EnvSession:

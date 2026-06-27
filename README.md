@@ -103,9 +103,10 @@ Constraints and honest limitations:
   session is the same object in another. Installs do not persist across a
   restart of the component.
 
-## Scientific tier: numpy + pandas
+## Scientific tier: numpy + pandas + regex
 
-The published `python-env` bundles **numpy 2.5.0** and **pandas 3.0.3** — the real
+The published `python-env` bundles **numpy 2.5.0**, **pandas 3.0.3**, and **regex**
+(the fast, extended `re` with fuzzy matching and Unicode properties) — real
 C-extension libraries, cross-compiled to WebAssembly and folded into the component,
 running inside the ACT sandbox:
 
