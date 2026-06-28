@@ -1,0 +1,190 @@
+diff --git a/Include/internal/pycore_pystate.h b/Include/internal/pycore_pystate.h
+index 7f1b0b7..6020d36 100644
+--- a/Include/internal/pycore_pystate.h
++++ b/Include/internal/pycore_pystate.h
+@@ -309,7 +309,9 @@ static uintptr_t return_pointer_as_int(char* p) {
+ 
+ static inline uintptr_t
+ _Py_get_machine_stack_pointer(void) {
+-#if _Py__has_builtin(__builtin_frame_address) || defined(__GNUC__)
++#if defined(__wasi__)
++    return UINTPTR_MAX;
++#elif _Py__has_builtin(__builtin_frame_address) || defined(__GNUC__)
+     return (uintptr_t)__builtin_frame_address(0);
+ #elif defined(_MSC_VER)
+     return (uintptr_t)_AddressOfReturnAddress();
+diff --git a/Lib/test/support/__init__.py b/Lib/test/support/__init__.py
+index 701d34b..5c131c8 100644
+--- a/Lib/test/support/__init__.py
++++ b/Lib/test/support/__init__.py
+@@ -637,11 +637,8 @@ def requires_subprocess():
+     """Used for subprocess, os.spawn calls, fd inheritance"""
+     return unittest.skipUnless(has_subprocess_support, "requires subprocess support")
+ 
+-# Emscripten's socket emulation and WASI sockets have limitations.
+-has_socket_support = not (
+-    is_emscripten
+-    or is_wasi
+-)
++# Emscripten's socket emulation has limitations.
++has_socket_support = not is_emscripten
+ 
+ def requires_working_socket(*, module=False):
+     """Skip tests or modules that require working sockets
+diff --git a/Modules/expat/internal.h b/Modules/expat/internal.h
+index 420d421..a0839e1 100644
+--- a/Modules/expat/internal.h
++++ b/Modules/expat/internal.h
+@@ -127,7 +127,7 @@
+ #  define EXPAT_FMT_ULL(midpart) "%" midpart "llu"
+ #  if ! defined(ULONG_MAX)
+ #    error Compiler did not define ULONG_MAX for us
+-#  elif ULONG_MAX == 18446744073709551615u // 2^64-1
++#  elif ULONG_MAX == 18446744073709551615u /* 2^64-1 */ || defined (__wasm32__)
+ #    define EXPAT_FMT_PTRDIFF_T(midpart) "%" midpart "ld"
+ #    define EXPAT_FMT_SIZE_T(midpart) "%" midpart "lu"
+ #  elif defined(__wasm32__) // 32bit mode Emscripten or WASI SDK
+diff --git a/Modules/socketmodule.c b/Modules/socketmodule.c
+index 4ddba8b..15ea1b9 100644
+--- a/Modules/socketmodule.c
++++ b/Modules/socketmodule.c
+@@ -203,7 +203,7 @@ shutdown(how) -- shut down traffic in one or both directions\n\
+ # define USE_GETHOSTBYNAME_LOCK
+ #endif
+ 
+-#if defined(__APPLE__) || defined(__CYGWIN__) || defined(__NetBSD__)
++#if defined(__APPLE__) || defined(__CYGWIN__) || defined(__NetBSD__) || defined(__wasi__)
+ #  include <sys/ioctl.h>
+ #endif
+ 
+diff --git a/Tools/wasm/wasi-env b/Tools/wasm/wasi-env
+index 08d4f49..104e5f4 100755
+--- a/Tools/wasm/wasi-env
++++ b/Tools/wasm/wasi-env
+@@ -40,9 +40,9 @@ if ! test -x "${WASI_SDK_PATH}/bin/clang"; then
+     exit 2
+ fi
+ 
+-CC="${WASI_SDK_PATH}/bin/clang"
+-CPP="${WASI_SDK_PATH}/bin/clang-cpp"
+-CXX="${WASI_SDK_PATH}/bin/clang++"
++CC="${WASI_SDK_PATH}/bin/clang --target=wasm32-wasip2"
++CPP="${WASI_SDK_PATH}/bin/clang-cpp --target=wasm32-wasip2"
++CXX="${WASI_SDK_PATH}/bin/clang++ --target=wasm32-wasip2"
+ 
+ # --sysroot is required if WASI-SDK is not installed in /opt/wasi-sdk.
+ if test "${WASI_SDK_PATH}" != "/opt/wasi-sdk"; then
+diff --git a/configure b/configure
+index 2088290..31fec03 100755
+--- a/configure
++++ b/configure
+@@ -7396,7 +7396,7 @@ then :
+   Emscripten) :
+      ;; #(
+   WASI) :
+-    as_fn_error $? "WASI dynamic linking is not implemented yet." "$LINENO" 5 ;; #(
++     ;; #(
+   *) :
+     as_fn_error $? "--enable-wasm-dynamic-linking only applies to Emscripten and WASI" "$LINENO" 5
+    ;;
+@@ -9780,8 +9780,7 @@ then :
+ 
+ fi
+ 
+-                as_fn_append LDFLAGS_NODIST " -z stack-size=16777216 -Wl,--stack-first -Wl,--initial-memory=41943040"
+-
++    
+  ;; #(
+   *) :
+      ;;
+@@ -34014,7 +34013,7 @@ then :
+ 
+     if test "$TEST_MODULES" = yes
+ then :
+-  if test "$ac_cv_func_dlopen" = yes
++  if test "$ac_cv_func_dlopen" = foo
+ then :
+   py_cv_module__testimportmultiple=yes
+ else case e in #(
+@@ -34054,7 +34053,7 @@ then :
+ 
+     if test "$TEST_MODULES" = yes
+ then :
+-  if test "$ac_cv_func_dlopen" = yes
++  if test "$ac_cv_func_dlopen" = foo
+ then :
+   py_cv_module__testmultiphase=yes
+ else case e in #(
+@@ -34094,7 +34093,7 @@ then :
+ 
+     if test "$TEST_MODULES" = yes
+ then :
+-  if test "$ac_cv_func_dlopen" = yes
++  if test "$ac_cv_func_dlopen" = foo
+ then :
+   py_cv_module__testsinglephase=yes
+ else case e in #(
+@@ -34255,7 +34254,7 @@ then :
+ 
+     if test "$TEST_MODULES" = yes
+ then :
+-  if test "$ac_cv_func_dlopen" = yes
++  if test "$ac_cv_func_dlopen" = foo
+ then :
+   py_cv_module_xxlimited=yes
+ else case e in #(
+@@ -34295,7 +34294,7 @@ then :
+ 
+     if test "$TEST_MODULES" = yes
+ then :
+-  if test "$ac_cv_func_dlopen" = yes
++  if test "$ac_cv_func_dlopen" = foo
+ then :
+   py_cv_module_xxlimited_35=yes
+ else case e in #(
+diff --git a/configure.ac b/configure.ac
+index aed1494..32f96ac 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -1318,7 +1318,7 @@ AC_ARG_ENABLE([wasm-dynamic-linking],
+ [
+   AS_CASE([$ac_sys_system],
+     [Emscripten], [],
+-    [WASI], [AC_MSG_ERROR([WASI dynamic linking is not implemented yet.])],
++    [WASI], [],
+     [AC_MSG_ERROR([--enable-wasm-dynamic-linking only applies to Emscripten and WASI])]
+   )
+ ], [
+@@ -2421,7 +2421,7 @@ AS_CASE([$ac_sys_system],
+     dnl gh-117645: Set the memory size to 40 MiB, the stack size to 16 MiB,
+     dnl and move the stack first.
+     dnl https://github.com/WebAssembly/wasi-libc/issues/233
+-    AS_VAR_APPEND([LDFLAGS_NODIST], [" -z stack-size=16777216 -Wl,--stack-first -Wl,--initial-memory=41943040"])
++    dnl AS_VAR_APPEND([LDFLAGS_NODIST], [" -z stack-size=16777216 -Wl,--stack-first -Wl,--initial-memory=41943040"])
+   ]
+ )
+ 
+@@ -8212,9 +8212,9 @@ PY_STDLIB_MOD([_testclinic_limited], [test "$TEST_MODULES" = yes])
+ PY_STDLIB_MOD([_testlimitedcapi], [test "$TEST_MODULES" = yes])
+ PY_STDLIB_MOD([_testinternalcapi], [test "$TEST_MODULES" = yes])
+ PY_STDLIB_MOD([_testbuffer], [test "$TEST_MODULES" = yes])
+-PY_STDLIB_MOD([_testimportmultiple], [test "$TEST_MODULES" = yes], [test "$ac_cv_func_dlopen" = yes])
+-PY_STDLIB_MOD([_testmultiphase], [test "$TEST_MODULES" = yes], [test "$ac_cv_func_dlopen" = yes])
+-PY_STDLIB_MOD([_testsinglephase], [test "$TEST_MODULES" = yes], [test "$ac_cv_func_dlopen" = yes])
++PY_STDLIB_MOD([_testimportmultiple], [test "$TEST_MODULES" = yes], [test "$ac_cv_func_dlopen" = foo])
++PY_STDLIB_MOD([_testmultiphase], [test "$TEST_MODULES" = yes], [test "$ac_cv_func_dlopen" = foo])
++PY_STDLIB_MOD([_testsinglephase], [test "$TEST_MODULES" = yes], [test "$ac_cv_func_dlopen" = foo])
+ PY_STDLIB_MOD([xxsubtype], [test "$TEST_MODULES" = yes])
+ PY_STDLIB_MOD([_xxtestfuzz], [test "$TEST_MODULES" = yes])
+ PY_STDLIB_MOD([_ctypes_test],
+@@ -8223,8 +8223,8 @@ PY_STDLIB_MOD([_ctypes_test],
+ 
+ dnl Limited API template modules.
+ dnl Emscripten does not support shared libraries yet.
+-PY_STDLIB_MOD([xxlimited], [test "$TEST_MODULES" = yes], [test "$ac_cv_func_dlopen" = yes])
+-PY_STDLIB_MOD([xxlimited_35], [test "$TEST_MODULES" = yes], [test "$ac_cv_func_dlopen" = yes])
++PY_STDLIB_MOD([xxlimited], [test "$TEST_MODULES" = yes], [test "$ac_cv_func_dlopen" = foo])
++PY_STDLIB_MOD([xxlimited_35], [test "$TEST_MODULES" = yes], [test "$ac_cv_func_dlopen" = foo])
+ 
+ # substitute multiline block, must come after last PY_STDLIB_MOD()
+ AC_SUBST([MODULE_BLOCK])
