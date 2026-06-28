@@ -27,3 +27,14 @@ ARG WASI_WHEELS_REF
 COPY sci/patches /opt/toolchain/sci/patches
 COPY sci/toolchain/build-cpython.sh /tmp/build-cpython.sh
 RUN WASI_WHEELS_REF="${WASI_WHEELS_REF}" bash /tmp/build-cpython.sh
+
+# ---------------------------------------------------------------------------
+# libcxx: PIC + exception-handling libc++ / libc++abi / libunwind
+#   Built against wasi-sdk 33 (base's /opt/wasi-sdk, clang 22) for modern
+#   try_table EH support (-fwasm-exceptions). Archives staged at:
+#     /opt/toolchain/build-cxx/lib/{libc++.a,libc++abi.a,libunwind.a}
+#   Pinned to LLVM 4434dabb6991 (22.1.0), the revision wasi-sdk 33 ships.
+# ---------------------------------------------------------------------------
+FROM cpython AS libcxx
+COPY sci/toolchain/build-libcxx-piceh.sh /tmp/build-libcxx.sh
+RUN bash /tmp/build-libcxx.sh
