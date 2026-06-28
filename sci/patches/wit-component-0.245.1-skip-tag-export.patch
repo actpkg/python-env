@@ -1,0 +1,15 @@
+--- a/src/linking/metadata.rs
++++ b/src/linking/metadata.rs
+@@ -485,6 +485,12 @@
+                                             shared: ty.shared,
+                                         })
+                                     }
++                                    // SjLj setjmp/longjmp lowering exports a
++                                    // __c_longjmp exception tag. The shared-everything
++                                    // linker has no cross-module use for an exported
++                                    // tag (it stays intra-module), so skip it rather
++                                    // than reject the whole object. [ACT local patch]
++                                    ExternalKind::Tag => continue,
+                                     kind => {
+                                         bail!(
+                                             "unsupported export kind for {}: {kind:?}",

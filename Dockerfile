@@ -38,3 +38,18 @@ RUN bash /tmp/build-cpython.sh
 FROM cpython AS libcxx
 COPY sci/toolchain/build-libcxx-piceh.sh /tmp/build-libcxx.sh
 RUN bash /tmp/build-libcxx.sh
+
+# ---------------------------------------------------------------------------
+# componentize: patched componentize-py built from source
+#   wit-component-0.245.1-skip-tag-export.patch: adds ExternalKind::Tag => continue
+#   in the shared-everything linker so C extensions that use setjmp (freetype,
+#   libjpeg) can be folded without "unsupported export kind for __c_longjmp: Tag".
+#   Pin: v0.24.0 = 811ff834f1d6 (known-good: folds all sci C-extension packages)
+#   Binary staged at /opt/toolchain/bin/componentize-py.
+# ---------------------------------------------------------------------------
+FROM libcxx AS componentize
+ARG COMPONENTIZE_PY_REF=811ff834f1d6
+COPY sci/patches/ /opt/toolchain/patches/
+COPY sci/toolchain/build-componentize-py.sh /tmp/build-componentize-py.sh
+RUN COMPONENTIZE_PY_REF="${COMPONENTIZE_PY_REF}" bash /tmp/build-componentize-py.sh
+ENV PATH="/opt/toolchain/bin:${PATH}"
