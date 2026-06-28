@@ -18,15 +18,15 @@ WORKDIR /opt/toolchain
 
 # ---------------------------------------------------------------------------
 # cpython: cross-built wasm32-wasip2 CPython 3.14.6 dev environment
-#   (libpython3.14.so + headers + sysconfigdata + compression.zstd) staged at
-#   /opt/toolchain/cpython/{install,sysconfig}. Built with wasi-wheels' OWN
-#   wasi-sdk 27 (separate from the base's 33 -- see build-cpython.sh header).
+#   (libpython3.14.so + headers + sysconfigdata) staged at
+#   /opt/toolchain/cpython/{install,sysconfig}. Built from upstream
+#   python/cpython v3.14.6 against the base's /opt/wasi-sdk (33) -- single SDK,
+#   no wasi-wheels build dependency (see build-cpython.sh header).
 # ---------------------------------------------------------------------------
 FROM base AS cpython
-ARG WASI_WHEELS_REF
 COPY sci/patches /opt/toolchain/sci/patches
 COPY sci/toolchain/build-cpython.sh /tmp/build-cpython.sh
-RUN WASI_WHEELS_REF="${WASI_WHEELS_REF}" bash /tmp/build-cpython.sh
+RUN bash /tmp/build-cpython.sh
 
 # ---------------------------------------------------------------------------
 # libcxx: PIC + exception-handling libc++ / libc++abi / libunwind
