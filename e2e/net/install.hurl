@@ -36,3 +36,14 @@ POST {{baseurl}}/tools/install
 HTTP 200
 [Asserts]
 jsonpath "$.content[0].data" contains "installed toolz from https://pypi.org/simple"
+
+# `_pip` (the install tool's own implementation module) is importable from
+# `exec` code, and app.py's exec harness supports a top-level `await` — same
+# PyCF_ALLOW_TOP_LEVEL_AWAIT pattern CPython's own asyncio REPL and Pyodide's
+# console use — so `await _pip.install(...)` runs for real from a single exec
+# call, no separate /tools/install round-trip needed.
+POST {{baseurl}}/tools/exec
+{"arguments": {"code": "import _pip\nawait _pip.install(\"humanize\")\nimport humanize\nhumanize.naturalsize(1234567)"}}
+HTTP 200
+[Asserts]
+jsonpath "$.content[0].data" == "'1.2 MB'"

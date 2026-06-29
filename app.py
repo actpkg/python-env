@@ -7,6 +7,7 @@ separate sessions are fully isolated. Sessions are required — use
 """
 
 import ast
+import inspect
 import io
 import sys
 import traceback
@@ -150,7 +151,16 @@ def _make_show(parts: list):
     return show
 
 
-def _run(code: str, ns: dict) -> object:
+# Compile flag also used by CPython's own asyncio REPL and Pyodide's console:
+# lets a bare `await` appear at top level. When the compiled code contains one,
+# eval()/exec()-ing it returns a coroutine instead of running synchronously, so
+# the caller must await it on the (already-running, componentize-py-driven)
+# event loop rather than executing it directly. No nested event loop needed —
+# `_run` awaits it inline, same as the standard REPL pattern.
+_TOP_LEVEL_AWAIT = ast.PyCF_ALLOW_TOP_LEVEL_AWAIT
+
+
+async def _run(code: str, ns: dict) -> object:
     """Execute *code* against *ns*, returning the result.
 
     Returns the text representation (stdout + last-expression repr + errors). If
@@ -160,7 +170,9 @@ def _run(code: str, ns: dict) -> object:
     Uses the IPython-style "last expression" heuristic: if the last top-level
     statement is a bare expression, eval it to capture its repr; exec the
     preceding statements first so side-effects (assignments, imports) land in
-    the namespace before the expression is evaluated.
+    the namespace before the expression is evaluated. A top-level ``await``
+    (e.g. ``await _pip.install(...)``) is supported in either half: if eval()/
+    exec() hands back a coroutine, it's awaited before moving on.
     """
     content_parts: list = []
     ns["show"] = _make_show(content_parts)
@@ -171,18 +183,28 @@ def _run(code: str, ns: dict) -> object:
     error_text = None
     try:
         try:
-            result_value = eval(compile(code, "<act>", "eval"), ns)
+            result_value = eval(compile(code, "<act>", "eval", flags=_TOP_LEVEL_AWAIT), ns)
+            if inspect.iscoroutine(result_value):
+                coro, result_value = result_value, None
+                result_value = await coro
         except SyntaxError:
             tree = ast.parse(code, mode="exec")
             if tree.body and isinstance(tree.body[-1], ast.Expr):
                 last = tree.body.pop()
                 if tree.body:
-                    exec(compile(tree, "<act>", "exec"), ns)
+                    pending = eval(compile(tree, "<act>", "exec", flags=_TOP_LEVEL_AWAIT), ns)
+                    if inspect.iscoroutine(pending):
+                        await pending
                 expr = ast.Expression(body=last.value)
                 ast.fix_missing_locations(expr)
-                result_value = eval(compile(expr, "<act>", "eval"), ns)
+                result_value = eval(compile(expr, "<act>", "eval", flags=_TOP_LEVEL_AWAIT), ns)
+                if inspect.iscoroutine(result_value):
+                    coro, result_value = result_value, None
+                    result_value = await coro
             else:
-                exec(compile(code, "<act>", "exec"), ns)
+                pending = eval(compile(code, "<act>", "exec", flags=_TOP_LEVEL_AWAIT), ns)
+                if inspect.iscoroutine(pending):
+                    await pending
     except Exception:
         error_text = traceback.format_exc()
     finally:
@@ -223,7 +245,7 @@ class PythonEnv:
         )
     )
     async def exec(self, code: str, *, session: EnvSession) -> object:
-        return _run(code, session.globals)
+        return await _run(code, session.globals)
 
     @tool(description="Clear all variables/imports in this session's namespace")
     async def reset_session(self, *, session: EnvSession) -> str:
