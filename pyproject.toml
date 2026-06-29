@@ -27,7 +27,7 @@ act-sdk = { path = "../../act-sdk-py" }
 [dependency-groups]
 dev = [
     "componentize-py>=0.24",
-    "ruff>=0.15",
+    "ruff>=0.15.20",
 ]
 sci = [
     "numpy==2.5.0",
