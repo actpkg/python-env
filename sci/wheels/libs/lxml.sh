@@ -90,9 +90,9 @@ CFG
 /* dup/dup2 stub for WASI wasm32-wasip2: libxml2 error-output path only */
 #include <errno.h>
 __attribute__((weak)) int dup(int fd)
-    { (void)fd; errno = 38 /* ENOSYS */; return -1; }
+    { (void)fd; errno = ENOSYS; return -1; }
 __attribute__((weak)) int dup2(int fd, int fd2)
-    { (void)fd; (void)fd2; errno = 38 /* ENOSYS */; return -1; }
+    { (void)fd; (void)fd2; errno = ENOSYS; return -1; }
 C
   local DUP_OBJ; DUP_OBJ=$(mktemp /tmp/dup_stub_XXXXXX.o)
   "$SDK/bin/clang" --target="$TARGET" -mcpu=lime1 -fPIC -c "$DUP_SRC" -o "$DUP_OBJ"

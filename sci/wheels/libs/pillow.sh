@@ -39,8 +39,20 @@ BUILD_CMD_EXTRA_ARGS=(
 )
 
 fetch_source() {
-  python -m pip download --no-binary pillow --no-deps "Pillow==${LIB_VERSION}" -d "$SRC"
-  tar xf "$SRC"/pillow-*.tar.gz -C "$SRC" --strip-components=1
+  # Fetch the sdist directly from the PyPI JSON API (avoids pip-download glob
+  # fragility under the cross-platform tag). The sdist basename is preserved
+  # from the URL so casing (pillow-/Pillow-) doesn't matter.
+  python - "${LIB_VERSION}" "$SRC" <<'PY'
+import json, os, shutil, sys, urllib.request
+ver, out_dir = sys.argv[1], sys.argv[2]
+data = json.load(urllib.request.urlopen(f"https://pypi.org/pypi/pillow/{ver}/json"))
+url = next(u["url"] for u in data["urls"] if u["packagetype"] == "sdist")
+out = os.path.join(out_dir, os.path.basename(url))
+print(f"Downloading {url}", flush=True)
+with urllib.request.urlopen(url) as r, open(out, "wb") as f:
+    shutil.copyfileobj(r, f)
+PY
+  tar xf "$SRC"/*.tar.gz -C "$SRC" --strip-components=1
 }
 
 # Called by build-wheel.sh after cross env is set, cwd = $SRC.
