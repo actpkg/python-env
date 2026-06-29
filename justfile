@@ -49,7 +49,8 @@ test-net:
 
 # Filesystem e2e: exec reads/writes data files under a wasi:filesystem grant.
 # Separate from the hermetic suite (needs the grant); NOT publish-gating.
-test-fs:
+# Uses the sci build (C-ext wheels) so fs tests exercise the full tier.
+test-fs: build-sci
     #!/usr/bin/env bash
     set -euo pipefail
     {{act}} run {{wasm}} --http --listen "{{addr}}" --session-args '{}' --allow wasi:filesystem &
@@ -57,9 +58,10 @@ test-fs:
     curl --retry 240 --retry-connrefused --retry-delay 1 -fs -o /dev/null {{baseurl}}/info
     {{hurl}} --test --variable "baseurl={{baseurl}}" e2e/fs/*.hurl
 
-# e2e for the scientific tier. Needs `just build sci` first AND a wasm-EH act:
-#   ACT=/path/to/wasm-eh/act just test-sci
-test-sci:
+# e2e for the scientific tier. Builds the sci component via the reproducible
+# bake (toolchain image + dist/ wheels) then runs the hurl suite that exercises
+# real C-ext packages (numpy, pandas, Pillow, lxml, …) inside the folded component.
+test-sci: build-sci
     #!/usr/bin/env bash
     set -euo pipefail
     {{act}} run {{wasm}} --http --listen "{{addr}}" --session-args '{}' &
