@@ -114,8 +114,11 @@ bash sci/wheels/index/publish.sh components/python-env/dist
    `.whl` files as release assets.
 2. Calls `build-index.sh` with the GitHub Release download URL as `base-url` so
    wheel hrefs point at the release assets, not at local paths.
-3. Outputs `_site/simple/` ready to be deployed to GitHub Pages via
-   `actions/deploy-pages` in CI.
+3. Outputs the `_site/` tree (containing `_site/simple/`). Deploy **`_site/`**
+   (not `_site/simple/`) to GitHub Pages via `actions/deploy-pages` (`path: ./_site`)
+   so the index is served at `<pages-url>/simple/` — matching the
+   `[[tool.uv.index]]` url in `pyproject.toml`. Deploying `_site/simple/` as the
+   Pages root would 404 the `/simple/` lookup.
 
 This is a **maintainer / CI step**.  Do not run it from a local sandbox — it
 requires network access to GitHub.

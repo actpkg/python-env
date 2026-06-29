@@ -12,4 +12,4 @@ gh release create "$RELEASE_TAG" -R "$WHEELS_REPO" \
     "$WHEEL_DIR"/*.whl --clobber
 BASE="https://github.com/$WHEELS_REPO/releases/download/$RELEASE_TAG"
 bash "$(dirname "$0")/build-index.sh" "$WHEEL_DIR" ./_site "$BASE"
-echo "Deploy ./_site/simple to GH Pages (CI: actions/deploy-pages)."
+echo "Deploy ./_site (NOT ./_site/simple) to GH Pages so the index is served at <pages-url>/simple/ — matching the pyproject [[tool.uv.index]] url (CI: actions/deploy-pages with path: ./_site)."
