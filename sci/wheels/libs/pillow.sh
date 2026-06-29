@@ -59,10 +59,13 @@ PY
 pre_build_hook() {
   local SDK=/opt/wasi-sdk
   local SETJMP_LIB="$SDK/share/wasi-sysroot/lib/wasm32-wasip2/libsetjmp.a"
+  local ZLIB_LIB="$PFX/lib/libz.a"
 
-  # Replace generic LDWRAP with one that appends libsetjmp.a, which provides
-  # the SjLj runtime (__wasm_setjmp/__wasm_longjmp) needed by libjpeg-turbo
-  # and freetype2. Without it the linker can't resolve the setjmp symbols.
+  # Replace generic LDWRAP with one that appends libsetjmp.a (SjLj runtime
+  # for libjpeg-turbo / freetype2) and libz.a (static zlib for freetype2's
+  # compressed-font support, needed by _imagingft.so).  Without libz.a the
+  # inflate*/deflate* symbols from freetype stay undefined and componentize-py
+  # cannot fold _imagingft.so.
   cat > "$LDWRAP" <<WRAP
 #!/usr/bin/env bash
 out=()
@@ -72,7 +75,7 @@ for a in "\$@"; do
     *) out+=("\$a");;
   esac
 done
-exec "$SDK/bin/wasm-ld" "\${out[@]}" "$SETJMP_LIB" --allow-undefined
+exec "$SDK/bin/wasm-ld" "\${out[@]}" "$SETJMP_LIB" "$ZLIB_LIB" --allow-undefined
 WRAP
   chmod +x "$LDWRAP"
 

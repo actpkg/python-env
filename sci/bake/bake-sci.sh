@@ -37,16 +37,13 @@ pip install \
   --index-url "file://$IDX/simple/" \
   $LIBS
 
-# 4. Drop PIL._imagingft (FreeType extension) — it has a dynamic zlib dependency
-#    (inflate/inflateInit2_/inflateEnd/inflateReset) that componentize-py cannot
-#    resolve at link time.  PIL.ImageFont falls back to pure-Python mode (no
-#    FreeType glyph rendering) which is acceptable in the wasm environment.
-rm -f "$SCI_PKGS/PIL/_imagingft.cpython-"*"-wasm32-wasi.so"
-
-# 5. Regenerate the sci-import block in app.py.
+# 4. Regenerate the sci-import block in app.py.
 python3 /work/sci/bake/gen-sci-imports.py
 
-# 6. Fold: sci wheels + pure deps (.venv) + app → python-env.wasm.
+# 5. Fold: sci wheels + pure deps (.venv) + app → python-env.wasm.
+# NOTE: _imagingft.so now folds successfully — zlib is statically linked in the
+#       pillow wheel (sci/wheels/libs/pillow.sh pre_build_hook), so inflate*
+#       symbols are no longer undefined at fold time.
 componentize-py -d wit -w component-world componentize \
   -p "$SCI_PKGS" \
   -p /work/.venv/lib/python3.14/site-packages \

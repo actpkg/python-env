@@ -23,8 +23,19 @@ build-lean:
 # build-sci: folds sci wheels from dist/ + pure deps + app via the toolchain image.
 # Requires: dist/*.whl (from sci/wheels/build-all.sh) + docker image python-env-toolchain:latest.
 build-sci:
+    #!/usr/bin/env bash
+    set -euo pipefail
     uv sync --reinstall-package act-sdk
+    # In rootless Docker the container's UID 0 already maps to the current host
+    # user, so --user is not needed and would break bind-mount access via the
+    # subuid namespace.  In rootful Docker --user prevents root-owned output files.
+    if docker info 2>/dev/null | grep -q rootless; then
+      USER_FLAG=()
+    else
+      USER_FLAG=(--user "$(id -u):$(id -g)")
+    fi
     docker run --rm --network=host \
+      "${USER_FLAG[@]}" \
       -v "{{justfile_directory()}}:/work" \
       -w /work \
       python-env-toolchain:latest \
