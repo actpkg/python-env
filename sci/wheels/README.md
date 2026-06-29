@@ -97,28 +97,40 @@ ls /tmp/sci-all | sort   # expect 8 package dirs + 8 dist-info dirs
 
 ## Publishing (CI / maintainer step)
 
-Publishing requires:
-- A `python-env-wheels` GitHub repository with GitHub Pages enabled.
-- `gh` authenticated with a PAT that has `contents:write` and `pages:write`.
-- The `WHEELS_REPO` and `RELEASE_TAG` environment variables set.
+Wheels and the PEP 503 index live together on an **orphan `gh-pages` branch** of
+the `actpkg/python-env` repository — no separate repo, no GitHub Releases.
+The branch has no shared history with `main`; it holds only generated binaries
+and the index.  Delete it when PyPI adds native WASI wheel support.
+
+GH Pages serves the branch root at `https://actpkg.github.io/python-env/`, giving:
+
+```
+.nojekyll
+wheels/<lib>-<ver>-cp314-cp314-wasi_0_0_0_wasm32.whl
+simple/index.html
+simple/<normalized-name>/index.html   ← hrefs → ../../wheels/<whl>  (relative)
+```
+
+The index is served at `https://actpkg.github.io/python-env/simple/`, matching
+the `[[tool.uv.index]]` url in `pyproject.toml`.
+
+Publishing requires push credentials to `actpkg/python-env` (SSH key, GITHUB_TOKEN,
+or a git credential helper).  No `gh` CLI, no `WHEELS_REPO`, no `RELEASE_TAG`.
 
 ```bash
-export WHEELS_REPO=actpkg/python-env-wheels
-export RELEASE_TAG=wheels-$(date +%Y.%m.%d)
-
-bash sci/wheels/index/publish.sh components/python-env/dist
+# from the repo root (act/components/python-env):
+bash sci/wheels/index/publish.sh dist
 ```
 
 `publish.sh`:
-1. Creates (or updates) a GitHub Release tagged `$RELEASE_TAG` and uploads the 8
-   `.whl` files as release assets.
-2. Calls `build-index.sh` with the GitHub Release download URL as `base-url` so
-   wheel hrefs point at the release assets, not at local paths.
-3. Outputs the `_site/` tree (containing `_site/simple/`). Deploy **`_site/`**
-   (not `_site/simple/`) to GitHub Pages via `actions/deploy-pages` (`path: ./_site`)
-   so the index is served at `<pages-url>/simple/` — matching the
-   `[[tool.uv.index]]` url in `pyproject.toml`. Deploying `_site/simple/` as the
-   Pages root would 404 the `/simple/` lookup.
+1. Copies `dist/*.whl` into `wheels/` inside a temp tree and adds `.nojekyll`.
+2. Calls `build-index.sh dist/ <tree> "../../wheels"` to generate `simple/` with
+   relative hrefs (`../../wheels/<whl>`) that resolve correctly at both `file://`
+   (local verification) and the live GH Pages HTTPS URL.
+3. Checks out (or creates) the orphan `gh-pages` branch via `git worktree add`,
+   replaces its entire content with the new tree, commits, and
+   **force-pushes** (`git push -f origin gh-pages`) — force-push is the correct
+   model for a history-free delivery branch.
 
 This is a **maintainer / CI step**.  Do not run it from a local sandbox — it
-requires network access to GitHub.
+requires push access to GitHub.

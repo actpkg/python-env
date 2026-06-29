@@ -52,4 +52,4 @@ bottleneck = ["bottleneck"]
 
 [[tool.uv.index]]
 name = "python-env-wasi"
-url  = "https://actpkg.github.io/python-env-wheels/simple/"
+url  = "https://actpkg.github.io/python-env/simple/"
