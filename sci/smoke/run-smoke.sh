@@ -23,7 +23,7 @@ echo "smoke.wasm size: $(stat -c '%s' "${OUTPUT}") bytes"
 
 # Validate with wasm-tools if available
 if command -v wasm-tools &>/dev/null; then
-  wasm-tools validate "${OUTPUT}"
+  wasm-tools validate --features component-model "${OUTPUT}"
   echo "wasm-tools validate: OK"
 else
   echo "wasm-tools not in PATH — skipping validate"

@@ -15,6 +15,35 @@ PATCHES_DIR="${PATCHES_DIR:-/opt/toolchain/patches}"
 
 cd /opt/toolchain
 
+# ── Reproducible Rust toolchain ────────────────────────────────────────────────
+# The base stage installs an unpinned `stable` toolchain whose lld linker may
+# hit an `.eh_frame` CIE bug when linking host proc-macro crates (pyo3-macros).
+# Fix: switch to an exact toolchain version BEFORE building, so this stage is
+# deterministic regardless of what `stable` resolves to at build time.
+#
+# Pin: 1.96.0 (LLVM 22.1.2, 2026-05-25)
+#   - Satisfies the effective MSRV of componentize-py v0.24.0's dependencies:
+#       wasmtime 43.0.2 + cranelift 0.130.2 require rustc >= 1.91.0
+#   - Verified to compile componentize-py v0.24.0 without linker errors
+#   - LLVM 22 ships a fixed lld that no longer mis-handles .eh_frame CIE refs
+# ───────────────────────────────────────────────────────────────────────────────
+RUST_PIN="1.96.0"
+rustup toolchain install "${RUST_PIN}" --profile minimal
+rustup default "${RUST_PIN}"
+
+# Also force GNU ld (bfd) for the host x86_64 target to avoid any rust-lld
+# `.eh_frame` regressions across future Rust/LLVM releases.  The base image's
+# build-essential provides /usr/bin/ld.bfd (GNU binutils).
+# We use `linker = "cc"` (stable since Cargo 1.0) to tell Cargo to use the
+# system C compiler frontend (GCC on Ubuntu) as the linker.  Passing
+# -fuse-ld=bfd via rustflags selects ld.bfd explicitly, bypassing rust-lld.
+mkdir -p ~/.cargo
+cat > ~/.cargo/config.toml <<'CARGO_TOML'
+[target.x86_64-unknown-linux-gnu]
+linker = "cc"
+rustflags = ["-C", "link-arg=-fuse-ld=bfd"]
+CARGO_TOML
+
 # 1. Clone and pin to the exact revision
 git clone https://github.com/bytecodealliance/componentize-py
 cd componentize-py
