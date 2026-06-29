@@ -15,14 +15,33 @@ baseurl := "http://" + addr
 build variant="lean":
     just build-{{variant}}
 
-build-lean:
+# Pyodide-style versioning guard: the version major MUST equal the CPython ABI
+# line (314 = CPython 3.14). Run before every build so a CPython minor bump can't
+# ship under a stale major — it fails the build and tells you to bump the major.
+check-version:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    uv run python - <<'PY'
+    import sys, tomllib
+    expected = f"{sys.version_info.major}{sys.version_info.minor}"
+    version = tomllib.load(open("pyproject.toml", "rb"))["project"]["version"]
+    major = version.split(".")[0]
+    if major != expected:
+        sys.exit(
+            f"ERROR: version major ({major}) != CPython ABI cp{expected}. "
+            f"Pyodide-style scheme: major = CPython minor. Bump the version to {expected}.0.0."
+        )
+    print(f"version {version}: major {major} == cp{expected} OK")
+    PY
+
+build-lean: check-version
     uv sync --reinstall-package act-sdk
     uv run componentize-py -d wit -w component-world componentize app -o {{wasm}}
     {{act-build}} pack {{wasm}}
 
 # build-sci: folds sci wheels from dist/ + pure deps + app via the toolchain image.
 # Requires: dist/*.whl (from sci/wheels/build-all.sh) + docker image python-env-toolchain:latest.
-build-sci:
+build-sci: check-version
     #!/usr/bin/env bash
     set -euo pipefail
     uv sync --reinstall-package act-sdk
@@ -86,9 +105,11 @@ publish:
     INFO=$({{act}} inspect component-manifest {{wasm}})
     NAME=$(echo "$INFO" | jq -r .std.name)
     VERSION=$(echo "$INFO" | jq -r .std.version)
+    MAJOR=${VERSION%%.*}   # 314.0.0 -> 314 : the CPython ABI channel (cp314)
     OUTPUT=$({{actbuild}} push {{wasm}} "{{registry}}/$NAME:$VERSION" \
       --skip-if-exists \
-      --also-tag latest 2>&1) || { echo "$OUTPUT" >&2; exit 1; }
+      --also-tag latest \
+      --also-tag "$MAJOR" 2>&1) || { echo "$OUTPUT" >&2; exit 1; }
     echo "$OUTPUT"
     DIGEST=$(echo "$OUTPUT" | grep "^Digest:" | awk '{print $2}' || true)
     if [ -n "${GITHUB_OUTPUT:-}" ]; then
@@ -105,9 +126,11 @@ publish-sci:
     INFO=$({{act}} inspect component-manifest {{wasm}})
     NAME=$(echo "$INFO" | jq -r .std.name)
     VERSION=$(echo "$INFO" | jq -r .std.version)
+    MAJOR=${VERSION%%.*}   # 314.0.0 -> 314 : the CPython ABI channel (cp314), sci variant
     OUTPUT=$({{actbuild}} push {{wasm}} "{{registry}}/$NAME:$VERSION-sci" \
       --skip-if-exists \
-      --also-tag sci 2>&1) || { echo "$OUTPUT" >&2; exit 1; }
+      --also-tag sci \
+      --also-tag "$MAJOR-sci" 2>&1) || { echo "$OUTPUT" >&2; exit 1; }
     echo "$OUTPUT"
     DIGEST=$(echo "$OUTPUT" | grep "^Digest:" | awk '{print $2}' || true)
     if [ -n "${GITHUB_OUTPUT:-}" ]; then
