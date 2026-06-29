@@ -21,9 +21,6 @@ dependencies = [
     "mpmath",
 ]
 
-[tool.uv.sources]
-act-sdk = { path = "../../act-sdk-py" }
-
 [dependency-groups]
 dev = [
     "componentize-py>=0.24",

@@ -10,21 +10,13 @@ resolution-markers = [
 [[package]]
 name = "act-sdk"
 version = "0.6.0"
-source = { directory = "../../act-sdk-py" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cbor2" },
 ]
-
-[package.metadata]
-requires-dist = [{ name = "cbor2", specifier = ">=5.9.0,<6" }]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "componentize-py", specifier = ">=0.24" },
-    { name = "mypy", specifier = ">=1.20.0" },
-    { name = "pytest", specifier = ">=9.0" },
-    { name = "ruff", specifier = ">=0.15" },
-    { name = "ty", specifier = ">=0.0.27" },
+sdist = { url = "https://files.pythonhosted.org/packages/a9/0c/f0c849a734df6b1f5a6d1de7c1488d9390a31f428a0d9f2cc05fc6940cf1/act_sdk-0.6.0.tar.gz", hash = "sha256:6a6e78b25c824a70edebbbcbfa3502748d78ac94873d24e402be00f374f03242", size = 39178, upload-time = "2026-06-29T16:55:21.253Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d7/73/494dd31d74baba67f8d4a2872cea423ee99e0966ab8c08e8b7b91f5da9dd/act_sdk-0.6.0-py3-none-any.whl", hash = "sha256:254fb73cca775fd8dd2d10fb646282035b9c769178dc4f24a9fad4e849dec0ea", size = 17361, upload-time = "2026-06-29T16:55:20.033Z" },
 ]
 
 [[package]]
@@ -444,7 +436,7 @@ sci = [
 
 [package.metadata]
 requires-dist = [
-    { name = "act-sdk", directory = "../../act-sdk-py" },
+    { name = "act-sdk", specifier = ">=0.6.0" },
     { name = "attrs" },
     { name = "beautifulsoup4" },
     { name = "cbor2", specifier = ">=5.9.0,<6" },
