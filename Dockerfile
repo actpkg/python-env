@@ -53,3 +53,15 @@ COPY sci/patches/ /opt/toolchain/patches/
 COPY sci/toolchain/build-componentize-py.sh /tmp/build-componentize-py.sh
 RUN COMPONENTIZE_PY_REF="${COMPONENTIZE_PY_REF}" bash /tmp/build-componentize-py.sh
 ENV PATH="/opt/toolchain/bin:${PATH}"
+
+# ---------------------------------------------------------------------------
+# clibs: C libraries cross-built for wasm32-wasip2 into /opt/toolchain/wasi-libs
+#   zlib 1.3.1, libjpeg-turbo 3.0.4, freetype 2.13.3, libxml2 2.13.5, libxslt 1.1.42
+#   setjmp libs (libjpeg, freetype) built with modern-EH SjLj:
+#     -mllvm -wasm-enable-sjlj -mllvm -wasm-use-legacy-eh=false
+#   This is the final toolchain image; downstream sci builds link against
+#   /opt/toolchain/wasi-libs/{include,lib} when compiling C-extension wheels.
+# ---------------------------------------------------------------------------
+FROM componentize AS clibs
+COPY sci/clibs/build-clibs.sh /tmp/build-clibs.sh
+RUN bash /tmp/build-clibs.sh
