@@ -1,0 +1,5 @@
+package local:smoke;
+
+world smoke {
+  export sqlite-version: func() -> string;
+}
