@@ -50,6 +50,16 @@ except ImportError:
     pass
 try:
     import pandas  # noqa: F401
+    # pandas lazily imports its display formatters on first use; freeze them so
+    # DataFrame repr / to_string / to_html / to_csv / info work offline (else
+    # ModuleNotFoundError: 'pandas.io.formats.string' on a DataFrame repr).
+    import pandas.io.formats.string  # noqa: F401 — DataFrame __repr__ / to_string
+    import pandas.io.formats.html  # noqa: F401 — to_html / notebook repr
+    import pandas.io.formats.console  # noqa: F401
+    import pandas.io.formats.format  # noqa: F401
+    import pandas.io.formats.printing  # noqa: F401
+    import pandas.io.formats.info  # noqa: F401 — df.info()
+    import pandas.io.formats.csvs  # noqa: F401 — to_csv
 except ImportError:
     pass
 try:
