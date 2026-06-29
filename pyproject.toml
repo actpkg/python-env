@@ -29,3 +29,27 @@ dev = [
     "componentize-py>=0.24",
     "ruff>=0.15",
 ]
+sci = [
+    "numpy==2.5.0",
+    "pandas==3.0.3",
+    "regex==2026.5.9",
+    "Pillow==12.2.0",
+    "msgpack==1.2.1",
+    "lxml==6.1.1",
+    "lz4==4.4.5",
+    "bottleneck==1.6.0",
+]
+
+[tool.python-env.freeze]
+numpy      = ["numpy", "numpy.char", "numpy.fft", "numpy.lib", "numpy.linalg", "numpy.ma", "numpy.polynomial", "numpy.rec", "numpy.strings"]
+pandas     = ["pandas"]
+regex      = ["regex"]
+pillow     = ["PIL.Image", "PIL.ImageFile", "PIL.ImageFont", "PIL.PngImagePlugin", "PIL.JpegImagePlugin", "PIL.BmpImagePlugin", "PIL.GifImagePlugin", "PIL.PpmImagePlugin", "PIL.ImageDraw", "PIL.ImageOps", "PIL.ImageFilter", "PIL.ImageColor", "PIL.ImageChops", "PIL.ImageEnhance", "PIL.ImageStat", "PIL.ImageMath"]
+msgpack    = ["msgpack"]
+lxml       = ["lxml.etree", "lxml.html"]
+lz4        = ["lz4.frame"]
+bottleneck = ["bottleneck"]
+
+[[tool.uv.index]]
+name = "python-env-wasi"
+url  = "https://actpkg.github.io/python-env-wheels/simple/"
