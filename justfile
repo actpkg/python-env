@@ -95,3 +95,22 @@ publish:
       echo "image={{registry}}/$NAME" >> "$GITHUB_OUTPUT"
       echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
     fi
+
+# Publish the sci variant on its own tag channel: <name>:<version>-sci plus the
+# moving `sci` tag (the scientific counterpart of `latest`). Same package + internal
+# name as lean — {{wasm}} here is the sci build (just build sci runs first).
+publish-sci:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    INFO=$({{act}} inspect component-manifest {{wasm}})
+    NAME=$(echo "$INFO" | jq -r .std.name)
+    VERSION=$(echo "$INFO" | jq -r .std.version)
+    OUTPUT=$({{actbuild}} push {{wasm}} "{{registry}}/$NAME:$VERSION-sci" \
+      --skip-if-exists \
+      --also-tag sci 2>&1) || { echo "$OUTPUT" >&2; exit 1; }
+    echo "$OUTPUT"
+    DIGEST=$(echo "$OUTPUT" | grep "^Digest:" | awk '{print $2}' || true)
+    if [ -n "${GITHUB_OUTPUT:-}" ]; then
+      echo "image={{registry}}/$NAME" >> "$GITHUB_OUTPUT"
+      echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
+    fi

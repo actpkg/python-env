@@ -28,6 +28,7 @@ on:
 permissions:
   contents: read
   packages: read
+  id-token: write     # keyless cosign signing of the published sci artifact
 
 # act / act-build via npm (@actcore/*); the justfile reads these for pack + run.
 env:
@@ -81,3 +82,24 @@ jobs:
 
       - name: test-sci (C-exts run in the folded component)
         run: just test-sci
+
+      # Publish the sci variant to its own tag channel (python-env:<ver>-sci + sci).
+      # Only on main pushes (not PRs/dispatch); {{wasm}} is the sci build from above.
+      - uses: sigstore/cosign-installer@v4.1.2
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      - name: Publish sci
+        id: publish
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        env:
+          OCI_USERNAME: __token__
+          OCI_PASSWORD: ${{ secrets.ACTPKG_TOKEN }}
+          ACT_SOURCE: ${{ github.server_url }}/${{ github.repository }}
+        run: just publish-sci
+      - name: Sign (keyless via GitHub OIDC)
+        if: steps.publish.outputs.digest != ''
+        env:
+          ACTPKG_TOKEN: ${{ secrets.ACTPKG_TOKEN }}
+          SUBJECT: ${{ steps.publish.outputs.image }}@${{ steps.publish.outputs.digest }}
+        run: |
+          echo "$ACTPKG_TOKEN" | cosign login actpkg.dev -u __token__ --password-stdin
+          cosign sign --yes "$SUBJECT"
