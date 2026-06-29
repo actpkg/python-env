@@ -12,6 +12,10 @@
 #   BUILD_DEPS       – bash array of extra pip deps (e.g. ("Cython>=3") )
 #   EXTRA_CFLAGS     – optional string appended to CFLAGS
 #   EXTRA_LDFLAGS    – optional string appended to LDFLAGS
+#
+# Compiler contract: CC=clang, CXX=clang++ (both via include-stripping wrappers).
+# C++ extensions link libc++ automatically (clang++ implies it), and $LIBCXX is
+# already on the generic link path, so C++ libs need no extra LDFLAGS for libc++.
 set -xeuo pipefail
 
 LIB="${1:?usage: build-wheel.sh <lib>}"
@@ -90,6 +94,24 @@ exec "$SDK/bin/clang" "\${final[@]}"
 WRAP
 chmod +x "$CCWRAP"
 
+# ── CXX wrapper: same include-stripping, but execs clang++ so C++ extensions ──
+# (numpy Meson backend, Pillow) implicitly link libc++. clang alone would not.
+CXXWRAP=$(mktemp /tmp/cxxwrap-XXXXXX)
+cat > "$CXXWRAP" <<WRAP
+#!/usr/bin/env bash
+final=(); i=1; args=("\$@"); n=\${#args[@]}
+while [ \$i -le \$n ]; do
+  a="\${args[\$((i-1))]}"
+  case "\$a" in
+    -I/usr/include|-I/usr/include/*|-I/usr/local/include) i=\$((i+1)); continue;;
+    -isystem) nx="\${args[\$i]:-}"; case "\$nx" in /usr/include*|/usr/local/include) i=\$((i+2)); continue;; esac;;
+  esac
+  final+=("\$a"); i=\$((i+1))
+done
+exec "$SDK/bin/clang++" "\${final[@]}"
+WRAP
+chmod +x "$CXXWRAP"
+
 # ── LD wrapper: strips host lib refs, allows undefined (resolved at fold time) ─
 LDWRAP=$(mktemp /tmp/ldwrap-XXXXXX)
 cat > "$LDWRAP" <<WRAP
@@ -106,17 +128,16 @@ export LDWRAP   # lib scripts that need the C++ EH tier can replace it
 
 # ── Cross-compiler env ─────────────────────────────────────────────────────────
 export CC="$CCWRAP"
-export CXX="$CCWRAP"
+export CXX="$CXXWRAP"
 export AR="$SDK/bin/llvm-ar"
 export RANLIB="$SDK/bin/llvm-ranlib"
 export CFLAGS="--target=$TARGET -mcpu=lime1 -fPIC -I$PFX/include -I$CROSS/include/python3.14${EXTRA_CFLAGS:+ $EXTRA_CFLAGS}"
 export CXXFLAGS="$CFLAGS"
 export LDSHARED="$SDK/bin/clang --target=$TARGET -shared -fuse-ld=$LDWRAP"
-export LDFLAGS="--target=$TARGET -L$PFX/lib${EXTRA_LDFLAGS:+ $EXTRA_LDFLAGS}"
+export LDFLAGS="--target=$TARGET -L$PFX/lib -L$LIBCXX${EXTRA_LDFLAGS:+ $EXTRA_LDFLAGS}"
 
 # ── Build ──────────────────────────────────────────────────────────────────────
 cd "$SRC"
-rm -rf build dist
 echo "### [$(date -u +%H:%M:%S)] cross-building $LIB-${LIB_VERSION} for $TARGET"
 python -m build --wheel --no-isolation -o /work/dist
 
