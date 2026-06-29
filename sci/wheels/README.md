@@ -18,8 +18,7 @@ sci/wheels/
   build-all.sh          # Driver: builds all 8 libs + generates the index
   libs/                 # One <lib>.sh per library (build instructions)
   index/
-    build-index.sh      # PEP 503 simple/ index generator
-    publish.sh          # GH-Release + GH-Pages publish (CI / maintainer)
+    build-index.sh      # PEP 503 simple/ index generator (used by the bake for a local index)
 ```
 
 ---
@@ -95,42 +94,17 @@ ls /tmp/sci-all | sort   # expect 8 package dirs + 8 dist-info dirs
 
 ---
 
-## Publishing (CI / maintainer step)
+## Publishing — deferred
 
-Wheels and the PEP 503 index live together on an **orphan `gh-pages` branch** of
-the `actpkg/python-env` repository — no separate repo, no GitHub Releases.
-The branch has no shared history with `main`; it holds only generated binaries
-and the index.  Delete it when PyPI adds native WASI wheel support.
+The wheels are currently a **build-and-cache input** for python-env's own sci bake,
+not a published artifact: `just build sci` builds a throwaway local `file://` index
+from `dist/` (via `index/build-index.sh`) and folds — no published index is needed.
 
-GH Pages serves the branch root at `https://actpkg.github.io/python-env/`, giving:
+**Publishing is intentionally dropped for now.** Publishing the wheels to a public
+PEP 503 index (e.g. an orphan `gh-pages` branch — they'd be among the first
+reproducible `wasi_0_0_0_wasm32` numpy/pandas/Pillow wheels, which PyPI has no slot
+for) is only worthwhile if the wheels need to be **reusable by other projects**.
+Revive it then. For python-env itself, build the wheels (`build-all.sh`) and bake;
+in CI, cache `dist/` keyed on the sci versions in `pyproject.toml`.
 
-```
-.nojekyll
-wheels/<lib>-<ver>-cp314-cp314-wasi_0_0_0_wasm32.whl
-simple/index.html
-simple/<normalized-name>/index.html   ← hrefs → ../../wheels/<whl>  (relative)
-```
-
-The index is served at `https://actpkg.github.io/python-env/simple/`, matching
-the `[[tool.uv.index]]` url in `pyproject.toml`.
-
-Publishing requires push credentials to `actpkg/python-env` (SSH key, GITHUB_TOKEN,
-or a git credential helper).  No `gh` CLI, no `WHEELS_REPO`, no `RELEASE_TAG`.
-
-```bash
-# from the repo root (act/components/python-env):
-bash sci/wheels/index/publish.sh dist
-```
-
-`publish.sh`:
-1. Copies `dist/*.whl` into `wheels/` inside a temp tree and adds `.nojekyll`.
-2. Calls `build-index.sh dist/ <tree> "../../wheels"` to generate `simple/` with
-   relative hrefs (`../../wheels/<whl>`) that resolve correctly at both `file://`
-   (local verification) and the live GH Pages HTTPS URL.
-3. Checks out (or creates) the orphan `gh-pages` branch via `git worktree add`,
-   replaces its entire content with the new tree, commits, and
-   **force-pushes** (`git push -f origin gh-pages`) — force-push is the correct
-   model for a history-free delivery branch.
-
-This is a **maintainer / CI step**.  Do not run it from a local sandbox — it
-requires push access to GitHub.
+`index/build-index.sh` is retained (the bake uses it for the local index).

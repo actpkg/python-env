@@ -49,7 +49,3 @@ msgpack    = ["msgpack"]
 lxml       = ["lxml.etree", "lxml.html"]
 lz4        = ["lz4.frame"]
 bottleneck = ["bottleneck"]
-
-[[tool.uv.index]]
-name = "python-env-wasi"
-url  = "https://actpkg.github.io/python-env/simple/"

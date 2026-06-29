@@ -165,7 +165,7 @@ scientific (`sci`) build is produced inside a **pinned toolchain Docker image**
 (`python-env-toolchain:latest`, built from the in-repo `Dockerfile`) with a patched
 componentize-py. The lean `just build` (stock toolchain, pure-Python batteries) stays
 CI-buildable for fast iteration and tests; the `sci` build cross-installs the compiled
-wasm wheels (built by `sci/wheels/build-all.sh`, resolved through a PEP 503 index) and
+wasm wheels (built by `sci/wheels/build-all.sh`, resolved through a local PEP 503 index built from those wheels) and
 folds them. **Stock `act` runs the folded sci component** — its runtime enables the wasm
 exception-handling proposal, so no special `act` is needed. All build/bake scripts live
 in-repo under `sci/` (toolchain: `Dockerfile` + `sci/toolchain/` + `sci/clibs/`; wheels:
