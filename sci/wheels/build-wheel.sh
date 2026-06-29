@@ -56,13 +56,22 @@ python -m pip install -q --upgrade pip
 
 # ── Source lib-specific script ─────────────────────────────────────────────────
 # Sets LIB_VERSION, fetch_source(), BUILD_DEPS (array), EXTRA_CFLAGS, EXTRA_LDFLAGS.
+# Optional: BUILD_CMD_EXTRA_ARGS (array of extra args for python -m build),
+#           pre_build_hook() function called after cross env is set and cwd is $SRC.
 EXTRA_CFLAGS=""
 EXTRA_LDFLAGS=""
 BUILD_DEPS=()
+BUILD_CMD_EXTRA_ARGS=()
 source "$SCRIPT_DIR/libs/${LIB}.sh"
 
 # ── Install build dependencies (before sysconfig override) ────────────────────
-python -m pip install -q setuptools wheel build "${BUILD_DEPS[@]}"
+# BUILD_DEPS are host tools (Cython, meson, ninja, etc.) that run on the build
+# machine — they must be native x86_64 packages, never WASI. Use a subshell to
+# temporarily clear the WASM platform tag so pip downloads native binary wheels.
+(
+  unset _PYTHON_HOST_PLATFORM
+  python -m pip install -q setuptools wheel build "${BUILD_DEPS[@]}"
+)
 
 # ── Fetch source (before cross env — pip must run with native sysconfig) ──────
 mkdir -p /work/dist
@@ -136,10 +145,16 @@ export CXXFLAGS="$CFLAGS"
 export LDSHARED="$SDK/bin/clang --target=$TARGET -shared -fuse-ld=$LDWRAP"
 export LDFLAGS="--target=$TARGET -L$PFX/lib -L$LIBCXX${EXTRA_LDFLAGS:+ $EXTRA_LDFLAGS}"
 
-# ── Build ──────────────────────────────────────────────────────────────────────
+# ── Pre-build hook (runs after cross env is set; cwd is $SRC) ─────────────────
+# Lib scripts may define pre_build_hook() to replace LDWRAP, patch sources, etc.
 cd "$SRC"
+if declare -f pre_build_hook >/dev/null 2>&1; then
+  pre_build_hook
+fi
+
+# ── Build ──────────────────────────────────────────────────────────────────────
 echo "### [$(date -u +%H:%M:%S)] cross-building $LIB-${LIB_VERSION} for $TARGET"
-python -m build --wheel --no-isolation -o /work/dist
+python -m build --wheel --no-isolation -o /work/dist "${BUILD_CMD_EXTRA_ARGS[@]}"
 
 # ── Assert platform tag ────────────────────────────────────────────────────────
 WHL=$(ls /work/dist/${LIB}-*-wasi_0_0_0_wasm32.whl 2>/dev/null || true)
