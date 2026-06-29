@@ -1,3 +1,6 @@
 *.wasm
 __pycache__/
 .venv/
+
+# subagent-driven-development working dir
+.superpowers/
