@@ -51,6 +51,7 @@ except ImportError:
     pass
 try:
     import pandas  # noqa: F401
+
     # pandas lazily imports its display formatters on first use; freeze them so
     # DataFrame repr / to_string / to_html / to_csv / info work offline (else
     # ModuleNotFoundError: 'pandas.io.formats.string' on a DataFrame repr).
@@ -183,7 +184,9 @@ async def _run(code: str, ns: dict) -> object:
     error_text = None
     try:
         try:
-            result_value = eval(compile(code, "<act>", "eval", flags=_TOP_LEVEL_AWAIT), ns)
+            result_value = eval(
+                compile(code, "<act>", "eval", flags=_TOP_LEVEL_AWAIT), ns
+            )
             if inspect.iscoroutine(result_value):
                 coro, result_value = result_value, None
                 result_value = await coro
@@ -192,17 +195,23 @@ async def _run(code: str, ns: dict) -> object:
             if tree.body and isinstance(tree.body[-1], ast.Expr):
                 last = tree.body.pop()
                 if tree.body:
-                    pending = eval(compile(tree, "<act>", "exec", flags=_TOP_LEVEL_AWAIT), ns)
+                    pending = eval(
+                        compile(tree, "<act>", "exec", flags=_TOP_LEVEL_AWAIT), ns
+                    )
                     if inspect.iscoroutine(pending):
                         await pending
                 expr = ast.Expression(body=last.value)
                 ast.fix_missing_locations(expr)
-                result_value = eval(compile(expr, "<act>", "eval", flags=_TOP_LEVEL_AWAIT), ns)
+                result_value = eval(
+                    compile(expr, "<act>", "eval", flags=_TOP_LEVEL_AWAIT), ns
+                )
                 if inspect.iscoroutine(result_value):
                     coro, result_value = result_value, None
                     result_value = await coro
             else:
-                pending = eval(compile(code, "<act>", "exec", flags=_TOP_LEVEL_AWAIT), ns)
+                pending = eval(
+                    compile(code, "<act>", "exec", flags=_TOP_LEVEL_AWAIT), ns
+                )
                 if inspect.iscoroutine(pending):
                     await pending
     except Exception:
