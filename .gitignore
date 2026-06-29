@@ -4,3 +4,7 @@ __pycache__/
 
 # subagent-driven-development working dir
 .superpowers/
+
+# built wheels (produced by sci/wheels/build-wheel.sh; published via sci index)
+dist/
+*.whl
