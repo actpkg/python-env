@@ -160,19 +160,28 @@ What's **not** available: compression I/O (`bz2`/`lzma`), memory-mapped reads,
 and the dataframe interchange protocol — WASI CPython lacks the underlying
 modules (`bz2`/`lzma`/`mmap`/`ctypes`), so those niche paths are stubbed or guarded.
 
-**Build note.** numpy 2.x's pocketfft uses C++ exceptions, so the scientific build
-needs the wasm exception-handling (wasm-EH) toolchain — a patched componentize-py
-and a wasm-EH-enabled `act` runtime. The lean `just build` (stock toolchain, no
-numpy/pandas) stays CI-buildable for fast iteration and tests; the published
-artifact is built locally with `just build-sci` (and tested with `just test-sci`
-against a wasm-EH `act`). The EH toolchain build scripts live with the project
-design notes.
+**Build note.** numpy/pandas/Pillow/lxml use C++ exceptions + setjmp, so the
+scientific (`sci`) build is produced inside a **pinned toolchain Docker image**
+(`python-env-toolchain:latest`, built from the in-repo `Dockerfile`) with a patched
+componentize-py. The lean `just build` (stock toolchain, pure-Python batteries) stays
+CI-buildable for fast iteration and tests; the `sci` build cross-installs the compiled
+wasm wheels (built by `sci/wheels/build-all.sh`, resolved through a PEP 503 index) and
+folds them. **Stock `act` runs the folded sci component** — its runtime enables the wasm
+exception-handling proposal, so no special `act` is needed. All build/bake scripts live
+in-repo under `sci/` (toolchain: `Dockerfile` + `sci/toolchain/` + `sci/clibs/`; wheels:
+`sci/wheels/`; bake: `sci/bake/`). _(Known limit: Pillow FreeType glyph rendering —
+`ImageFont.truetype` — is unavailable in the sci build for now; `ImageFont.load_default()`
+works.)_
 
 ## Build
 ```bash
-just build && just test          # lean: pure-Python, CI-buildable
-just build-sci                   # full: + numpy 2.5.0 + pandas 3.0.3 (wasm-EH toolchain)
-ACT=/path/to/wasm-eh/act just test-sci
+just build && just test          # lean (= just build lean): pure-Python, CI-buildable
+
+# sci tier — needs the toolchain image + the wasm wheels:
+docker build -t python-env-toolchain:latest .   # once: the pinned toolchain image
+bash sci/wheels/build-all.sh                     # build the 8 wasm wheels into dist/
+just build sci                                   # cross-install wheels + fold the sci component
+just test-sci                                    # sci e2e — stock act runs the folded component
 ```
 
 ## License

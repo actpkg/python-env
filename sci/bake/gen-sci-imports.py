@@ -9,6 +9,7 @@ library, ordered by the sci dependency group.  The script is idempotent.
 """
 
 import re
+import sys
 import tomllib
 import pathlib
 
@@ -40,7 +41,13 @@ gen = (
 
 app_path = root / "app.py"
 app = app_path.read_text()
-new = re.sub(r"# >>> sci-imports.*?# <<< sci-imports", gen, app, flags=re.S)
+new, n = re.subn(r"# >>> sci-imports.*?# <<< sci-imports", gen, app, flags=re.S)
+if n != 1:
+    sys.exit(
+        f"ERROR: expected exactly 1 '# >>> sci-imports … # <<< sci-imports' region "
+        f"in app.py, found {n}. The markers are missing/renamed/duplicated — refusing "
+        f"to write (would silently drop the sci-import block from the build)."
+    )
 if new == app:
     print("app.py is already up-to-date (no changes made).")
 else:
