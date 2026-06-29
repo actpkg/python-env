@@ -64,4 +64,6 @@ ENV PATH="/opt/toolchain/bin:${PATH}"
 # ---------------------------------------------------------------------------
 FROM componentize AS clibs
 COPY sci/clibs/build-clibs.sh /tmp/build-clibs.sh
-RUN bash /tmp/build-clibs.sh
+# --network=host: source archives are fetched from codeload.github.com / gitlab /
+#   savannah, which BuildKit's default restricted build network may block.
+RUN --network=host bash /tmp/build-clibs.sh

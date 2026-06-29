@@ -27,8 +27,12 @@ cmake -S zlib-1.3.1 -B b-zlib \
   -DCMAKE_C_FLAGS="-fPIC -mcpu=lime1" \
   -DZLIB_BUILD_EXAMPLES=OFF
 cmake --build b-zlib --target install
-# zlib installs as libzlibstatic.a when SHARED is off; provide canonical libz.a
-cp "$PFX/lib/libzlibstatic.a" "$PFX/lib/libz.a" 2>/dev/null || true
+# zlib 1.3.1's CMakeLists builds the `zlib` SHARED target unconditionally
+# (no BUILD_SHARED_LIBS/ZLIB_BUILD_SHARED knob), so it always installs a
+# libzlib.so. WASI has no dynamic linking — drop the dead shared object and
+# keep only the static archive, exposed under the canonical name libz.a.
+rm -f "$PFX/lib/"libzlib.so*
+cp "$PFX/lib/libzlibstatic.a" "$PFX/lib/libz.a"
 
 # ---------------------------------------------------------------------------
 # libjpeg-turbo 3.0.4  (uses setjmp)  ->  libjpeg.a
