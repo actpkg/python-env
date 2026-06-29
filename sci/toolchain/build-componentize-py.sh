@@ -63,6 +63,27 @@ rustup target add wasm32-wasip2
 #    Cargo.toml and downloads the upstream crate to ~/.cargo/registry.
 cargo fetch
 
+# 3b. Patch src/lib.rs: enable the wasm exceptions proposal in the wasmtime
+#     Config so that Pillow and other C extensions built with wasm-EH SjLj
+#     lowering (which emits exception tags) can be folded by componentize-py.
+#     The insert point is the line that enables component-model-async — we add
+#     wasm_exceptions(true) immediately after it.
+python3 - <<'PY'
+import sys
+p = "src/lib.rs"
+s = open(p).read()
+needle = "config.wasm_component_model_async(true);"
+replacement = needle + "\n    config.wasm_exceptions(true); // ACT: enable wasm-EH for sci C-extension wheels"
+if "wasm_exceptions" not in s:
+    if needle not in s:
+        print(f"ERROR: needle not found in {p}; cannot apply exceptions patch", file=sys.stderr)
+        sys.exit(1)
+    open(p, "w").write(s.replace(needle, replacement, 1))
+    print(f"patched {p}: added wasm_exceptions(true)")
+else:
+    print(f"{p}: wasm_exceptions already present, skipping patch")
+PY
+
 # 4. Vendor + patch wit-component-0.245.1
 #    Copy the crate out of the registry and apply our one-liner tag-skip fix.
 WC=$(ls -d "$HOME"/.cargo/registry/src/*/wit-component-0.245.1)
