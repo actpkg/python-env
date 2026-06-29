@@ -28,13 +28,36 @@ if "ctypes" not in sys.modules and not _have("_ctypes"):
 
     # wasm32 / ILP32 C type sizes (note: long == 4 bytes here).
     _SIZES = {
-        "c_bool": 1, "c_char": 1, "c_byte": 1, "c_ubyte": 1, "c_wchar": 4,
-        "c_short": 2, "c_ushort": 2, "c_int": 4, "c_uint": 4,
-        "c_long": 4, "c_ulong": 4, "c_longlong": 8, "c_ulonglong": 8,
-        "c_size_t": 4, "c_ssize_t": 4, "c_float": 4, "c_double": 8,
-        "c_longdouble": 16, "c_int8": 1, "c_uint8": 1, "c_int16": 2,
-        "c_uint16": 2, "c_int32": 4, "c_uint32": 4, "c_int64": 8, "c_uint64": 8,
-        "c_void_p": 4, "c_char_p": 4, "c_wchar_p": 4, "py_object": 4,
+        "c_bool": 1,
+        "c_char": 1,
+        "c_byte": 1,
+        "c_ubyte": 1,
+        "c_wchar": 4,
+        "c_short": 2,
+        "c_ushort": 2,
+        "c_int": 4,
+        "c_uint": 4,
+        "c_long": 4,
+        "c_ulong": 4,
+        "c_longlong": 8,
+        "c_ulonglong": 8,
+        "c_size_t": 4,
+        "c_ssize_t": 4,
+        "c_float": 4,
+        "c_double": 8,
+        "c_longdouble": 16,
+        "c_int8": 1,
+        "c_uint8": 1,
+        "c_int16": 2,
+        "c_uint16": 2,
+        "c_int32": 4,
+        "c_uint32": 4,
+        "c_int64": 8,
+        "c_uint64": 8,
+        "c_void_p": 4,
+        "c_char_p": 4,
+        "c_wchar_p": 4,
+        "py_object": 4,
     }
 
     class _CData:
@@ -59,23 +82,41 @@ if "ctypes" not in sys.modules and not _have("_ctypes"):
         setattr(_ct, _n, type(_n, (_CData,), {"_wasi_size": _s}))
 
     for _n, _v in {
-        "sizeof": _sizeof, "alignment": lambda *a, **k: 4,
+        "sizeof": _sizeof,
+        "alignment": lambda *a, **k: 4,
         "Structure": type("Structure", (_CData,), {}),
         "Union": type("Union", (_CData,), {}),
         "Array": type("Array", (_CData,), {}),
         "BigEndianStructure": type("BigEndianStructure", (_CData,), {}),
         "LittleEndianStructure": type("LittleEndianStructure", (_CData,), {}),
-        "_SimpleCData": _CData, "_Pointer": _CData, "_CFuncPtr": _CData,
-        "CDLL": _unavail, "PyDLL": _unavail, "WinDLL": _unavail, "OleDLL": _unavail,
+        "_SimpleCData": _CData,
+        "_Pointer": _CData,
+        "_CFuncPtr": _CData,
+        "CDLL": _unavail,
+        "PyDLL": _unavail,
+        "WinDLL": _unavail,
+        "OleDLL": _unavail,
         "cdll": types.SimpleNamespace(LoadLibrary=_unavail),
-        "CFUNCTYPE": _cfunctype, "PYFUNCTYPE": _cfunctype, "WINFUNCTYPE": _cfunctype,
-        "POINTER": _pointer_type, "pointer": _unavail, "cast": _unavail,
-        "byref": _unavail, "addressof": _unavail, "memmove": _unavail,
-        "memset": _unavail, "create_string_buffer": _unavail,
-        "create_unicode_buffer": _unavail, "string_at": _unavail, "wstring_at": _unavail,
-        "get_errno": lambda: 0, "set_errno": lambda v: 0,
+        "CFUNCTYPE": _cfunctype,
+        "PYFUNCTYPE": _cfunctype,
+        "WINFUNCTYPE": _cfunctype,
+        "POINTER": _pointer_type,
+        "pointer": _unavail,
+        "cast": _unavail,
+        "byref": _unavail,
+        "addressof": _unavail,
+        "memmove": _unavail,
+        "memset": _unavail,
+        "create_string_buffer": _unavail,
+        "create_unicode_buffer": _unavail,
+        "string_at": _unavail,
+        "wstring_at": _unavail,
+        "get_errno": lambda: 0,
+        "set_errno": lambda v: 0,
         "ArgumentError": type("ArgumentError", (Exception,), {}),
-        "RTLD_LOCAL": 0, "RTLD_GLOBAL": 256, "DEFAULT_MODE": 0,
+        "RTLD_LOCAL": 0,
+        "RTLD_GLOBAL": 256,
+        "DEFAULT_MODE": 0,
     }.items():
         setattr(_ct, _n, _v)
 
@@ -117,8 +158,18 @@ if "lzma" not in sys.modules and not _have("_lzma"):
     _lzma.decompress = _raises("lzma is not available under WASI")
     _lzma.open = _raises("lzma is not available under WASI")
     _lzma.LZMAError = type("LZMAError", (Exception,), {})
-    _lzma.FORMAT_XZ, _lzma.FORMAT_ALONE, _lzma.FORMAT_RAW, _lzma.FORMAT_AUTO = 1, 2, 3, 0
-    _lzma.CHECK_NONE, _lzma.CHECK_CRC32, _lzma.CHECK_CRC64, _lzma.CHECK_SHA256 = 0, 1, 4, 10
+    _lzma.FORMAT_XZ, _lzma.FORMAT_ALONE, _lzma.FORMAT_RAW, _lzma.FORMAT_AUTO = (
+        1,
+        2,
+        3,
+        0,
+    )
+    _lzma.CHECK_NONE, _lzma.CHECK_CRC32, _lzma.CHECK_CRC64, _lzma.CHECK_SHA256 = (
+        0,
+        1,
+        4,
+        10,
+    )
     sys.modules["lzma"] = _lzma
 
 
@@ -128,7 +179,12 @@ if "lzma" not in sys.modules and not _have("_lzma"):
 # exist; constructing one raises.
 if "mmap" not in sys.modules and not _have("mmap"):
     _mmap = types.ModuleType("mmap")
-    _mmap.ACCESS_DEFAULT, _mmap.ACCESS_READ, _mmap.ACCESS_WRITE, _mmap.ACCESS_COPY = 0, 1, 2, 3
+    _mmap.ACCESS_DEFAULT, _mmap.ACCESS_READ, _mmap.ACCESS_WRITE, _mmap.ACCESS_COPY = (
+        0,
+        1,
+        2,
+        3,
+    )
     _mmap.PROT_READ, _mmap.PROT_WRITE, _mmap.MAP_SHARED, _mmap.MAP_PRIVATE = 1, 2, 1, 2
     _mmap.ALLOCATIONGRANULARITY, _mmap.PAGESIZE = 4096, 4096
 

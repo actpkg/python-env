@@ -29,6 +29,11 @@ permissions:
   contents: read
   packages: read
 
+# act / act-build via npm (@actcore/*); the justfile reads these for pack + run.
+env:
+  ACT: npx --yes @actcore/act
+  ACT_BUILD: npx --yes @actcore/act-build
+
 jobs:
   sci:
     name: Build + test sci component
@@ -67,7 +72,7 @@ jobs:
       - uses: astral-sh/setup-uv@v6
       - uses: moonrepo/setup-rust@v1
         with:
-          bins: just, hurl, wasm-tools, act-cli
+          bins: just, hurl, wasm-tools
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

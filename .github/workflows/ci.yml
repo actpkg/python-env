@@ -5,6 +5,12 @@ on:
     branches: [main]
   pull_request:
 
+# act / act-build are distributed via npm (@actcore/*), not crates.io — the
+# justfile reads these env overrides for the `pack` and `run` steps.
+env:
+  ACT: npx --yes @actcore/act
+  ACT_BUILD: npx --yes @actcore/act-build
+
 jobs:
   build:
     name: Build
@@ -34,7 +40,7 @@ jobs:
           name: component.wasm
       - uses: moonrepo/setup-rust@v1
         with:
-          bins: just, hurl, act-cli
+          bins: just, hurl
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: just test
@@ -50,7 +56,7 @@ jobs:
           name: component.wasm
       - uses: moonrepo/setup-rust@v1
         with:
-          bins: just, hurl, act-cli
+          bins: just, hurl
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: just test-net

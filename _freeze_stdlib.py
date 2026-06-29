@@ -52,7 +52,9 @@ for _name in sorted(sys.stdlib_module_names):
     # so installed packages that import them don't hit a freeze gap.
     if _mod is not None and hasattr(_mod, "__path__"):
         try:
-            for _info in pkgutil.walk_packages(_mod.__path__, _name + ".", onerror=lambda _n: None):
+            for _info in pkgutil.walk_packages(
+                _mod.__path__, _name + ".", onerror=lambda _n: None
+            ):
                 _try(_info.name)
         except BaseException:  # noqa: BLE001
             pass

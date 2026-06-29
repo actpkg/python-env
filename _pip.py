@@ -64,7 +64,9 @@ def _split_url(url: str) -> tuple[str, str]:
     return (rest, "/") if slash == -1 else (rest[:slash], rest[slash:])
 
 
-async def _http_get(url: str, req_headers: dict | None = None) -> tuple[int, dict, bytes]:
+async def _http_get(
+    url: str, req_headers: dict | None = None
+) -> tuple[int, dict, bytes]:
     fields = Fields()
     for k, v in (req_headers or {}).items():
         fields.append(k, v.encode() if isinstance(v, str) else bytes(v))
@@ -83,7 +85,9 @@ async def _http_get(url: str, req_headers: dict | None = None) -> tuple[int, dic
         name.lower(): bytes(value).decode("latin-1")
         for name, value in response.get_headers().copy_all()
     }
-    res_fut = wit_world.result_unit_wasi_http_types_error_code_future(lambda: Ok(None))[1]
+    res_fut = wit_world.result_unit_wasi_http_types_error_code_future(lambda: Ok(None))[
+        1
+    ]
     rx, _trailers = Response.consume_body(response, res_fut)
     buf = bytearray()
     with rx:
@@ -101,7 +105,11 @@ class _InMemoryFinder(importlib.abc.MetaPathFinder, importlib.abc.Loader):
             raise ValueError(f"refusing non-pure wheel: {filename}")
         with zipfile.ZipFile(io.BytesIO(buffer)) as zf:
             for name in zf.namelist():
-                if not name.endswith(".py") or ".dist-info/" in name or ".data/" in name:
+                if (
+                    not name.endswith(".py")
+                    or ".dist-info/" in name
+                    or ".data/" in name
+                ):
                     continue
                 mod = name[:-3].replace("/", ".")
                 if mod == "__init__":
@@ -110,14 +118,20 @@ class _InMemoryFinder(importlib.abc.MetaPathFinder, importlib.abc.Loader):
                     fullname, is_pkg = mod[: -len(".__init__")], True
                 else:
                     fullname, is_pkg = mod, False
-                self._modules[fullname] = (zf.read(name), is_pkg, f"<wheel:{filename}>/{name}")
+                self._modules[fullname] = (
+                    zf.read(name),
+                    is_pkg,
+                    f"<wheel:{filename}>/{name}",
+                )
         importlib.invalidate_caches()
 
     def find_spec(self, fullname, path=None, target=None):
         if fullname not in self._modules:
             return None
         _src, is_pkg, origin = self._modules[fullname]
-        return importlib.util.spec_from_loader(fullname, self, origin=origin, is_package=is_pkg)
+        return importlib.util.spec_from_loader(
+            fullname, self, origin=origin, is_package=is_pkg
+        )
 
     def create_module(self, spec):
         return None

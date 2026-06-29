@@ -2,6 +2,7 @@
 Minimal smoke test component.
 Imports sqlite3 (a CPython C-extension) to prove the toolchain can fold C-exts.
 """
+
 import sqlite3
 import wit_world
 
