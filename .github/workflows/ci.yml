@@ -34,7 +34,7 @@ jobs:
           name: component.wasm
       - uses: moonrepo/setup-rust@v1
         with:
-          bins: just, hurl
+          bins: just, hurl, act-cli
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: just test
@@ -50,7 +50,7 @@ jobs:
           name: component.wasm
       - uses: moonrepo/setup-rust@v1
         with:
-          bins: just, hurl
+          bins: just, hurl, act-cli
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: just test-net

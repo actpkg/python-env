@@ -1,0 +1,78 @@
+name: Sci build
+
+# Reproducible sci build in CI: pull the toolchain image (built by toolchain.yml),
+# build the wasm wheels (cached, keyed on the sci versions), bake the sci component
+# (just build sci), and run test-sci. Not the merge gate (lean ci.yml is) — sci is
+# long/heavy. Requires toolchain.yml to have published the image first.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'sci/**'
+      - 'pyproject.toml'
+      - 'app.py'
+      - 'wit/**'
+      - 'e2e/sci/**'
+      - '.github/workflows/sci.yml'
+  pull_request:
+    paths:
+      - 'sci/**'
+      - 'pyproject.toml'
+      - 'app.py'
+      - 'wit/**'
+      - 'e2e/sci/**'
+      - '.github/workflows/sci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  sci:
+    name: Build + test sci component
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      IMAGE: ghcr.io/actpkg/python-env-toolchain:latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Log in to ghcr
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull + tag toolchain image (recipes expect python-env-toolchain:latest)
+        run: |
+          docker pull "$IMAGE"
+          docker tag "$IMAGE" python-env-toolchain:latest
+
+      - name: Cache wheels (keyed on the sci versions in pyproject.toml)
+        id: wheelcache
+        uses: actions/cache@v4
+        with:
+          path: dist
+          key: sci-wheels-${{ hashFiles('pyproject.toml') }}
+
+      - name: Build the 8 wasm wheels (only on cache miss)
+        if: steps.wheelcache.outputs.cache-hit != 'true'
+        run: |
+          docker run --rm --network=host -v "$PWD:/work" -w /work \
+            python-env-toolchain:latest bash sci/wheels/build-all.sh
+
+      - uses: astral-sh/setup-uv@v6
+      - uses: moonrepo/setup-rust@v1
+        with:
+          bins: just, hurl, wasm-tools, act-cli
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Bake the sci component
+        run: just build sci
+
+      - name: test-sci (C-exts run in the folded component)
+        run: just test-sci

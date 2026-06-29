@@ -102,8 +102,20 @@ cat >> Cargo.toml <<'EOF'
 wit-component = { path = "../wit-component-patched" }
 EOF
 
-# 6. Build the release binary
-cargo build --release
+# 6. Build the release binary.
+#    Retry: componentize-py's build.rs fetches the dicej/cpython tarball from
+#    GitHub codeload at build time, which is intermittently flaky. A transient
+#    download failure should not fail the whole image build.
+n=0
+until cargo build --release; do
+  n=$((n + 1))
+  if [ "$n" -ge 4 ]; then
+    echo "### cargo build failed after $n attempts" >&2
+    exit 1
+  fi
+  echo "### cargo build attempt $n failed (likely the flaky dicej/cpython build.rs download) — retry in 15s"
+  sleep 15
+done
 
 # 7. Install to the shared toolchain bin
 install -D target/release/componentize-py /opt/toolchain/bin/componentize-py

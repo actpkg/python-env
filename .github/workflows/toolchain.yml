@@ -1,0 +1,59 @@
+name: Toolchain image
+
+# Build the pinned python-env sci toolchain image and push it to ghcr.
+# Triggered when the toolchain sources change; sci.yml pulls the result.
+# This is also the reproducible clean build of the image (cross-CPython 3.14.6,
+# PIC+EH libc++, patched componentize-py, C-libs) on a network-reliable runner —
+# the verification the local sandbox can't finish (flaky GitHub codeload).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Dockerfile'
+      - 'sci/toolchain/**'
+      - 'sci/clibs/**'
+      - 'sci/patches/**'
+      - '.github/workflows/toolchain.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  toolchain:
+    name: Build + push toolchain image
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      IMAGE: ghcr.io/actpkg/python-env-toolchain
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Log in to ghcr
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build toolchain image
+        # --network=host: the clibs stage fetches sources from codeload/gitlab/savannah.
+        # ~60-90 min (cross-CPython is the long pole). build-componentize-py.sh retries
+        # the flaky dicej/cpython build.rs download.
+        run: |
+          docker build --network=host \
+            -t "$IMAGE:latest" \
+            -t "$IMAGE:${{ github.sha }}" \
+            .
+
+      - name: Smoke — fold a trivial component
+        run: |
+          docker run --rm --network=host -v "$PWD:/work" -w /work \
+            "$IMAGE:latest" bash sci/smoke/run-smoke.sh
+
+      - name: Push
+        run: |
+          docker push "$IMAGE:latest"
+          docker push "$IMAGE:${{ github.sha }}"
