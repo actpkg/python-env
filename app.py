@@ -35,11 +35,9 @@ import yaml as _yaml  # noqa: F401
 # --python-path by the `just build-sci` recipe (the patched wasm-EH toolchain) and
 # get folded/frozen here. In the lean `just build` (stock toolchain) they are
 # absent, so each is skipped and the component is unchanged.
+# >>> sci-imports (generated from pyproject [tool.python-env.freeze] — do not edit by hand)
 try:
-    import numpy as _numpy  # noqa: F401
-
-    # numpy lazy-loads these submodules via numpy.__getattr__; componentize-py only
-    # freezes statically-reached modules, so import them here for pandas to use.
+    import numpy  # noqa: F401
     import numpy.char  # noqa: F401
     import numpy.fft  # noqa: F401
     import numpy.lib  # noqa: F401
@@ -51,36 +49,17 @@ try:
 except ImportError:
     pass
 try:
-    import pandas as _pandas  # noqa: F401
+    import pandas  # noqa: F401
 except ImportError:
     pass
 try:
-    import regex as _regex  # noqa: F401 — C-ext fast/extended re (sci build)
+    import regex  # noqa: F401
 except ImportError:
     pass
 try:
-    import msgpack as _msgpack  # noqa: F401 — fast C++ binary serialization (sci build)
-except ImportError:
-    pass
-try:
-    import lz4.frame  # noqa: F401 — fast compression (sci build)
-except ImportError:
-    pass
-try:
-    import bottleneck as _bottleneck  # noqa: F401 — fast NaN-aware array funcs (sci build)
-except ImportError:
-    pass
-try:
-    import lxml.etree  # noqa: F401 — XML/HTML parsing + XPath (sci build)
-    import lxml.html  # noqa: F401
-except ImportError:
-    pass
-try:
-    # Pillow (sci build). Pre-import the format plugins + helpers it otherwise
-    # lazy-loads, so they're frozen (componentize-py snapshots only what's reached).
     import PIL.Image  # noqa: F401
     import PIL.ImageFile  # noqa: F401
-    import PIL.ImageFont  # noqa: F401  # freetype text rendering
+    import PIL.ImageFont  # noqa: F401
     import PIL.PngImagePlugin  # noqa: F401
     import PIL.JpegImagePlugin  # noqa: F401
     import PIL.BmpImagePlugin  # noqa: F401
@@ -96,6 +75,24 @@ try:
     import PIL.ImageMath  # noqa: F401
 except ImportError:
     pass
+try:
+    import msgpack  # noqa: F401
+except ImportError:
+    pass
+try:
+    import lxml.etree  # noqa: F401
+    import lxml.html  # noqa: F401
+except ImportError:
+    pass
+try:
+    import lz4.frame  # noqa: F401
+except ImportError:
+    pass
+try:
+    import bottleneck  # noqa: F401
+except ImportError:
+    pass
+# <<< sci-imports
 
 
 class EnvSession:
