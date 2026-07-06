@@ -28,7 +28,10 @@ _PANDAS_CROSSFILE=/tmp/wasi-eh-numpy.cross
 BUILD_CMD_EXTRA_ARGS=(
   -Cbuild-dir=build
   "-Csetup-args=--cross-file=$_PANDAS_CROSSFILE"
-  "-Csetup-args=-Dbuildtype=minsize"
+  # -Os without debug info. NOT -Dbuildtype=minsize: meson's minsize preset is
+  # "-Os AND debug=true" (embeds DWARF); set optimization + debug explicitly.
+  "-Csetup-args=-Doptimization=s"
+  "-Csetup-args=-Ddebug=false"
 )
 
 fetch_source() {

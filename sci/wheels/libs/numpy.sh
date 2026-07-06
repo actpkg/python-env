@@ -19,13 +19,16 @@ EXTRA_LDFLAGS="-nostdlib++"
 _NUMPY_CROSSFILE=/tmp/wasi-eh-numpy.cross
 
 # Pass meson setup args to python -m build.
-# -Dbuildtype=minsize: optimize for size (-Os -DNDEBUG) instead of meson-python's
-#   default release (-O3). -Ddisable-optimization=true already drops the SIMD/CPU
-#   dispatch kernels (no runtime CPU dispatch on wasm), so minsize costs no SIMD.
+# Size optimization: -Doptimization=s (-Os) + -Ddebug=false (no -g). Do NOT use
+#   -Dbuildtype=minsize — meson's minsize preset is "-Os AND debug=true", which
+#   embeds tens of MB of DWARF per big C-ext (it bloated the folded component by
+#   ~65MB across numpy+pandas). -Ddisable-optimization=true also drops the SIMD/CPU
+#   dispatch kernels (no runtime CPU dispatch on wasm), so this costs no SIMD.
 BUILD_CMD_EXTRA_ARGS=(
   -Cbuild-dir=build
   "-Csetup-args=--cross-file=$_NUMPY_CROSSFILE"
-  "-Csetup-args=-Dbuildtype=minsize"
+  "-Csetup-args=-Doptimization=s"
+  "-Csetup-args=-Ddebug=false"
   "-Csetup-args=-Dblas=none"
   "-Csetup-args=-Dlapack=none"
   "-Csetup-args=-Dallow-noblas=true"
