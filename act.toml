@@ -3,7 +3,7 @@ name = "python-env"
 # Pyodide-style versioning: major = CPython ABI line (314 = CPython 3.14);
 # minor.patch = python-env's own iteration. A CPython minor bump forces a major
 # bump (enforced by `just check-version`). Superseded 0.16.0.
-version = "314.1.0"
+version = "314.1.1"
 description = "Stateful, batteries-included Python environment for AI agents (per-session namespace, pure-Python libs + numpy + pandas, runtime pip install)"
 
 [std.capabilities."wasi:http"]
