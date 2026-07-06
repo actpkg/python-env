@@ -80,6 +80,16 @@ jobs:
       - name: Bake the sci component
         run: just build sci
 
+      - name: Report + upload baked artifact size
+        run: |
+          BYTES=$(stat -c%s python-env.wasm)
+          echo "python-env.wasm (sci) = $BYTES bytes ($(numfmt --to=iec "$BYTES"))" | tee -a "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: python-env-sci-wasm
+          path: python-env.wasm
+          if-no-files-found: error
+
       - name: test-sci (C-exts run in the folded component)
         run: just test-sci
 

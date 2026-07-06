@@ -23,6 +23,7 @@ cd src
 curl -fsSL https://github.com/madler/zlib/releases/download/v1.3.1/zlib-1.3.1.tar.gz | tar xz
 cmake -S zlib-1.3.1 -B b-zlib \
   -DCMAKE_TOOLCHAIN_FILE="$TC" \
+  -DCMAKE_BUILD_TYPE=MinSizeRel \
   -DCMAKE_INSTALL_PREFIX="$PFX" \
   -DCMAKE_C_FLAGS="-fPIC -mcpu=lime1" \
   -DZLIB_BUILD_EXAMPLES=OFF
@@ -40,6 +41,7 @@ cp "$PFX/lib/libzlibstatic.a" "$PFX/lib/libz.a"
 curl -fsSL https://github.com/libjpeg-turbo/libjpeg-turbo/releases/download/3.0.4/libjpeg-turbo-3.0.4.tar.gz | tar xz
 cmake -S libjpeg-turbo-3.0.4 -B b-jpeg \
   -DCMAKE_TOOLCHAIN_FILE="$TC" \
+  -DCMAKE_BUILD_TYPE=MinSizeRel \
   -DCMAKE_INSTALL_PREFIX="$PFX" \
   -DENABLE_SHARED=OFF \
   -DWITH_SIMD=OFF \
@@ -60,6 +62,7 @@ curl -fsSL https://gitlab.freedesktop.org/freetype/freetype/-/archive/VER-2-13-3
   | tar xz --transform='s|^freetype-VER-2-13-3|freetype-2.13.3|'
 cmake -S freetype-2.13.3 -B b-ft \
   -DCMAKE_TOOLCHAIN_FILE="$TC" \
+  -DCMAKE_BUILD_TYPE=MinSizeRel \
   -DCMAKE_INSTALL_PREFIX="$PFX" \
   -DBUILD_SHARED_LIBS=OFF \
   -DCMAKE_C_FLAGS="-fPIC -mcpu=lime1 $SJLJ -I$PFX/include" \
@@ -81,6 +84,7 @@ curl -fsSL https://gitlab.gnome.org/GNOME/libxml2/-/archive/v2.13.5/libxml2-v2.1
   | tar xz --transform='s|^libxml2-[^/]*/|libxml2-2.13.5/|'
 cmake -S libxml2-2.13.5 -B b-xml2 \
   -DCMAKE_TOOLCHAIN_FILE="$TC" \
+  -DCMAKE_BUILD_TYPE=MinSizeRel \
   -DCMAKE_INSTALL_PREFIX="$PFX" \
   -DBUILD_SHARED_LIBS=OFF \
   -DCMAKE_C_FLAGS="-fPIC -mcpu=lime1 -Wno-implicit-function-declaration -I$PFX/include" \
@@ -106,6 +110,7 @@ curl -fsSL https://gitlab.gnome.org/GNOME/libxslt/-/archive/v1.1.42/libxslt-v1.1
   | tar xz --transform='s|^libxslt-[^/]*/|libxslt-1.1.42/|'
 cmake -S libxslt-1.1.42 -B b-xslt \
   -DCMAKE_TOOLCHAIN_FILE="$TC" \
+  -DCMAKE_BUILD_TYPE=MinSizeRel \
   -DCMAKE_INSTALL_PREFIX="$PFX" \
   -DBUILD_SHARED_LIBS=OFF \
   -DCMAKE_C_FLAGS="-fPIC -mcpu=lime1 -Wno-implicit-function-declaration -I$PFX/include -I$PFX/include/libxml2" \

@@ -28,7 +28,7 @@ _PANDAS_CROSSFILE=/tmp/wasi-eh-numpy.cross
 BUILD_CMD_EXTRA_ARGS=(
   -Cbuild-dir=build
   "-Csetup-args=--cross-file=$_PANDAS_CROSSFILE"
-  "-Csetup-args=-Dbuildtype=release"
+  "-Csetup-args=-Dbuildtype=minsize"
 )
 
 fetch_source() {

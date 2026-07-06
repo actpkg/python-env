@@ -44,7 +44,7 @@ FLAGS="-mcpu=lime1 --target=$TARGET --sysroot=$SYSROOT -resource-dir $RD -fwasm-
 
 rm -rf "$BUILD_DIR" "$PREFIX"
 cmake -G Ninja -S "$ROOT/llvm-project/runtimes" -B "$BUILD_DIR" \
-  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_BUILD_TYPE=MinSizeRel \
   -DCMAKE_C_COMPILER="$SDK/bin/clang" \
   -DCMAKE_CXX_COMPILER="$SDK/bin/clang++" \
   -DCMAKE_ASM_COMPILER="$SDK/bin/clang" \

@@ -136,11 +136,15 @@ chmod +x "$LDWRAP"
 export LDWRAP   # lib scripts that need the C++ EH tier can replace it
 
 # ── Cross-compiler env ─────────────────────────────────────────────────────────
+# -Os: optimize C/C++ extensions for size. setuptools/distutils appends this env
+#   CFLAGS *after* the cross-CPython sysconfig flags (which carry -O3 -DNDEBUG),
+#   so the trailing -Os wins over -O3 while -DNDEBUG is retained. Meson-based libs
+#   (numpy/pandas) already set -Dbuildtype=minsize; -Os here keeps them consistent.
 export CC="$CCWRAP"
 export CXX="$CXXWRAP"
 export AR="$SDK/bin/llvm-ar"
 export RANLIB="$SDK/bin/llvm-ranlib"
-export CFLAGS="--target=$TARGET -mcpu=lime1 -fPIC -I$PFX/include -I$CROSS/include/python3.14${EXTRA_CFLAGS:+ $EXTRA_CFLAGS}"
+export CFLAGS="--target=$TARGET -mcpu=lime1 -Os -fPIC -I$PFX/include -I$CROSS/include/python3.14${EXTRA_CFLAGS:+ $EXTRA_CFLAGS}"
 export CXXFLAGS="$CFLAGS"
 export LDSHARED="$SDK/bin/clang --target=$TARGET -shared -fuse-ld=$LDWRAP"
 export LDFLAGS="--target=$TARGET -L$PFX/lib -L$LIBCXX${EXTRA_LDFLAGS:+ $EXTRA_LDFLAGS}"
