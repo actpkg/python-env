@@ -29,7 +29,7 @@ dev = [
     "ruff>=0.15",
 ]
 sci = [
-    "numpy==2.5.0",
+    "numpy==2.5.1",
     "pandas==3.0.3",
     "regex==2026.5.9",
     "Pillow==12.3.0",
