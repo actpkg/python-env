@@ -2,13 +2,7 @@ wasm := "python-env.wasm"
 act := env("ACT", "act")
 actbuild := env("ACT_BUILD", "act-build")
 act-build := env("ACT_BUILD", "act-build")
-hurl := env("HURL", "hurl")
 registry := env("OCI_REGISTRY", "actpkg.dev/library")
-# Random port for the e2e server, in a safe range: above the well-known/common
-# dev ports and below the Linux outbound ephemeral range (32768+).
-port := `shuf -i 10000-29999 -n 1`
-addr := "[::1]:" + port
-baseurl := "http://" + addr
 
 # build the component (lean = pure batteries; sci = + compiled C-ext wheels)
 # Pre-req for sci: `dist/` must contain the 8 wasm wheels (run sci/wheels/build-all.sh first).
@@ -61,43 +55,29 @@ build-sci: check-version
       bash sci/bake/bake-sci.sh
     {{act-build}} pack {{wasm}}
 
+# Hermetic suite: no capability grant, so it also proves install-denied (the
+# wasi:http ceiling actually denies with none). net/, fs/ and sci/ have their
+# own recipes below — each spawns its own `act --mcp` process per test (see
+# e2e/conftest.py), so nothing here needs to spawn or wait on a server itself.
 test:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    {{act}} run {{wasm}} --http --listen "{{addr}}" --session-args '{}' &
-    trap "kill $!" EXIT
-    curl --retry 240 --retry-connrefused --retry-delay 1 -fs -o /dev/null {{baseurl}}/info
-    {{hurl}} --test --variable "baseurl={{baseurl}}" e2e/*.hurl
+    ACT="{{act}}" uv run --project e2e pytest e2e/ -v --ignore=e2e/net --ignore=e2e/fs --ignore=e2e/sci
 
+# Makes real HTTPS requests to pypi.org / files.pythonhosted.org — needs
+# outbound network from wherever it runs.
 test-net:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    {{act}} run {{wasm}} --http --listen "{{addr}}" --session-args '{}' --allow wasi:http &
-    trap "kill $!" EXIT
-    curl --retry 240 --retry-connrefused --retry-delay 1 -fs -o /dev/null {{baseurl}}/info
-    {{hurl}} --test --variable "baseurl={{baseurl}}" e2e/net/*.hurl
+    ACT="{{act}}" uv run --project e2e pytest e2e/net/ -v
 
 # Filesystem e2e: exec reads/writes data files under a wasi:filesystem grant.
 # Separate from the hermetic suite (needs the grant); NOT publish-gating.
 # Uses the sci build (C-ext wheels) so fs tests exercise the full tier.
 test-fs: build-sci
-    #!/usr/bin/env bash
-    set -euo pipefail
-    {{act}} run {{wasm}} --http --listen "{{addr}}" --session-args '{}' --allow wasi:filesystem &
-    trap "kill $!" EXIT
-    curl --retry 240 --retry-connrefused --retry-delay 1 -fs -o /dev/null {{baseurl}}/info
-    {{hurl}} --test --variable "baseurl={{baseurl}}" e2e/fs/*.hurl
+    ACT="{{act}}" uv run --project e2e pytest e2e/fs/ -v
 
 # e2e for the scientific tier. Builds the sci component via the reproducible
-# bake (toolchain image + dist/ wheels) then runs the hurl suite that exercises
+# bake (toolchain image + dist/ wheels) then runs the suite that exercises
 # real C-ext packages (numpy, pandas, Pillow, lxml, …) inside the folded component.
 test-sci: build-sci
-    #!/usr/bin/env bash
-    set -euo pipefail
-    {{act}} run {{wasm}} --http --listen "{{addr}}" --session-args '{}' &
-    trap "kill $!" EXIT
-    curl --retry 240 --retry-connrefused --retry-delay 1 -fs -o /dev/null {{baseurl}}/info
-    {{hurl}} --test --variable "baseurl={{baseurl}}" e2e/sci/*.hurl
+    ACT="{{act}}" uv run --project e2e pytest e2e/sci/ -v
 
 publish:
     #!/usr/bin/env bash

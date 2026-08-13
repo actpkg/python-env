@@ -38,9 +38,10 @@ jobs:
       - uses: actions/download-artifact@v8
         with:
           name: component.wasm
+      - uses: astral-sh/setup-uv@v7
       - uses: moonrepo/setup-rust@v1
         with:
-          bins: just, hurl
+          bins: just
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: just test
@@ -54,9 +55,10 @@ jobs:
       - uses: actions/download-artifact@v8
         with:
           name: component.wasm
+      - uses: astral-sh/setup-uv@v7
       - uses: moonrepo/setup-rust@v1
         with:
-          bins: just, hurl
+          bins: just
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: just test-net

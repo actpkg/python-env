@@ -1,6 +1,8 @@
 *.wasm
 __pycache__/
 .venv/
+.pytest_cache/
+.pytest-act-stderr.log
 
 # subagent-driven-development working dir
 .superpowers/
