@@ -59,8 +59,13 @@ build-sci: check-version
 # wasi:http ceiling actually denies with none). net/, fs/ and sci/ have their
 # own recipes below — each spawns its own `act --mcp` process per test (see
 # e2e/conftest.py), so nothing here needs to spawn or wait on a server itself.
+# Rust e2e harness (rmcp client) — replaced the python fastmcp/pytest suite
+# (root hermetic directory; net/, fs/ and sci/ subdirectories keep their
+# python suites, which need grants or heavy optional builds). Must run from
+# inside e2e/: cargo discovers .cargo/config.toml from the CWD, and only
+# e2e/'s own config pins the host target.
 test:
-    ACT="{{act}}" uv run --project e2e pytest e2e/ -v --ignore=e2e/net --ignore=e2e/fs --ignore=e2e/sci
+    cd e2e && ACT="{{act}}" WASM="../{{wasm}}" cargo test
 
 # Makes real HTTPS requests to pypi.org / files.pythonhosted.org — needs
 # outbound network from wherever it runs.

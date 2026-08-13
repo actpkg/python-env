@@ -10,3 +10,6 @@ __pycache__/
 # built wheels (produced by sci/wheels/build-wheel.sh; published via sci index)
 dist/
 *.whl
+
+# rust e2e harness build dir (host target, own build-dir)
+e2e/target/
